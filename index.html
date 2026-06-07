@@ -360,6 +360,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <!-- Audio controls -->
       <div id="player-audio-wrap" style="display:none">
         <audio id="player-audio" controls style="width:100%;display:block;padding:12px 0"></audio>
+        <div style="display:flex;justify-content:flex-end;padding:0 0 10px">
+          <button id="loop-btn" onclick="toggleLoop()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:20px;font-size:15px;cursor:pointer;font-family:inherit;transition:all .2s">🔁 Loop: Off</button>
+        </div>
       </div>
     </div>
     <div id="player-body">
@@ -1020,7 +1023,7 @@ async function playSong(songId) {
     plText.innerHTML    = '<span class="pl-spin">⛓</span> Downloading from blockchain…';
 
     try {
-      const fromBlock = s.blockNumber ? Math.max(0, s.blockNumber) : 0;
+      const fromBlock = 0; // always scan from genesis — chunks may predate the SongCreated event
       const total     = s.totalChunks;
       let completed   = 0;
 
@@ -1110,9 +1113,10 @@ async function playSong(songId) {
 function showAudioPlayer(src) {
   const audioEl = document.getElementById('player-audio');
   audioEl.src   = src;
+  audioEl.loop  = _loopOn;
   document.getElementById('player-audio-wrap').style.display = 'block';
   audioEl.play().catch(() => {});
-  // Auto-play next song when this one ends
+  // Auto-play next song when this one ends (only fires if loop is off)
   audioEl.onended = playNextSong;
   // Activate download button now that audio is ready
   const dlBtn = document.getElementById('player-dl-btn');
@@ -1121,6 +1125,19 @@ function showAudioPlayer(src) {
     dlBtn.style.opacity = '1';
     dlBtn.style.cursor  = 'pointer';
     dlBtn.onclick = () => downloadSong(_currentSongId, src);
+  }
+}
+
+let _loopOn = false;
+function toggleLoop() {
+  _loopOn = !_loopOn;
+  const audioEl = document.getElementById('player-audio');
+  const btn = document.getElementById('loop-btn');
+  if (audioEl) audioEl.loop = _loopOn;
+  if (btn) {
+    btn.textContent = _loopOn ? '🔁 Loop: On' : '🔁 Loop: Off';
+    btn.style.borderColor = _loopOn ? 'var(--pink)' : 'var(--border)';
+    btn.style.color = _loopOn ? 'var(--pink)' : 'var(--muted)';
   }
 }
 
