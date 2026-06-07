@@ -735,7 +735,7 @@ function songCardHtml(rawS, pl) {
         ? `${!isPermanent ? `<button class="song-action-btn" style="color:var(--green);border-color:rgba(82,201,127,0.35)" onclick="event.stopPropagation();unhideSong(${s.songId})">✅</button>` : `<span class="song-action-btn" style="color:var(--muted);cursor:default" title="Permanent">🔒</span>`}
            <button class="song-action-btn" style="color:#f97316;border-color:rgba(249,115,22,0.35)" onclick="event.stopPropagation();permanentRemoveSong(${s.songId})">🔒 Perm</button>
            <button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();banAndRemoveSong(${s.songId},'${s.uploader}')">🚫 Ban</button>`
-        : `<button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();hideSong(${s.songId})">🗑️ Remove</button>`)
+        : `<button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();hideSong(${s.songId})">🗑️ Remove</button><button class="song-action-btn" style="color:#f97316;border-color:rgba(249,115,22,0.35)" onclick="event.stopPropagation();permanentRemoveSong(${s.songId})">🔒 Perm</button>`)
     : '';
 
   const tags     = parseTags(s.description);
@@ -1591,7 +1591,7 @@ async function permanentRemoveSong(songId) {
     const data = await res.json();
     if (!res.ok) { if (res.status===401) { _adminKey=null; sessionStorage.removeItem('lt_ak'); } showToast(data.error||'Failed',true); return; }
     permanentHidden.add(sKey); hiddenSongs.add(sKey);
-    showHiddenSongs();
+    applyFilters();
     showToast('Permanently removed');
   } catch(e) { showToast('Error: '+e.message,true); }
 }
@@ -1608,7 +1608,7 @@ async function banAndRemoveSong(songId, uploaderWallet) {
     const data = await res.json();
     if (!res.ok) { if (res.status===401) { _adminKey=null; sessionStorage.removeItem('lt_ak'); } showToast(data.error||'Failed',true); return; }
     permanentHidden.add(sKey); hiddenSongs.add(sKey);
-    showHiddenSongs();
+    applyFilters();
     showToast('Wallet banned + song permanently removed');
   } catch(e) { showToast('Error: '+e.message,true); }
 }
