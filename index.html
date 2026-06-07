@@ -500,7 +500,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 // ════════════════════════════════════════════════════════
 //  CONFIG
 // ════════════════════════════════════════════════════════
-const CONTRACT_ADDRESS  = 'DEPLOY_LIGHTTUNES_V1_ADDRESS_HERE'; // TODO: replace after deploy
+const CONTRACT_ADDRESS  = '0x3587067a1E37A1c05095B3cc053564Db49a27F7D'; // TODO: replace after deploy
 const CHAIN_ID          = 9200n;
 const RPC_URL           = 'https://rpc.mainnet.lightchain.ai';
 const LIGHTSCAN_TX      = 'https://mainnet.lightscan.app/tx/';
@@ -580,7 +580,7 @@ window.addEventListener('load', async () => {
   await loadLtOverrides();
   await loadPublicHiddenList();
   if (sessionStorage.getItem('lt_ak')) loadPermanentLists();
-  if (CONTRACT_ADDRESS !== 'DEPLOY_LIGHTTUNES_V1_ADDRESS_HERE') {
+  if (CONTRACT_ADDRESS !== '0x3587067a1E37A1c05095B3cc053564Db49a27F7D') {
     readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
     await loadAllSongs();
   } else {
@@ -1079,7 +1079,7 @@ async function connectWallet() {
     }
     signer = await provider.getSigner();
     wallet = await signer.getAddress();
-    if (CONTRACT_ADDRESS !== 'DEPLOY_LIGHTTUNES_V1_ADDRESS_HERE') {
+    if (CONTRACT_ADDRESS !== '0x3587067a1E37A1c05095B3cc053564Db49a27F7D') {
       writeContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
     }
     isAdmin = ADMIN_WALLETS.includes(wallet.toLowerCase());
