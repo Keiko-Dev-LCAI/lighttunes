@@ -559,6 +559,7 @@ let ltOverrides     = {};
 let isAdmin         = false;
 let _adminKey       = null;
 let _showPlaylist   = false; // true when in playlist view
+let _currentSongId  = null; // song currently open in player (for auto-play next)
 
 // Personal playlist stored in localStorage per wallet
 function getPlaylist() {
@@ -852,6 +853,8 @@ async function playSong(songId) {
   const descClean = cleanDesc(s.description);
   document.getElementById('player-description').textContent = descClean || '';
 
+  _currentSongId = songId;
+
   const sKey = 'v1-' + s.songId;
   const pl   = getPlaylist();
   const isInPl = pl.has(sKey);
@@ -859,7 +862,8 @@ async function playSong(songId) {
   const plBtn     = wallet ? `<button class="btn btn-outline btn-sm" id="player-pl-btn" onclick="doTogglePlaylist(${s.songId});this.textContent=getPlaylist().has('v1-${s.songId}')?'♥ Saved':'♡ Save'">${isInPl ? '♥ Saved' : '♡ Save'}</button>` : '';
   const mintBtn   = `<button class="btn btn-gold btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
   const chainBtn  = s.txHash ? `<a class="btn btn-outline btn-sm" href="${LIGHTSCAN_TX}${s.txHash}" target="_blank">🔗 Chain</a>` : '';
-  document.getElementById('player-actions').innerHTML = plBtn + mintBtn + shareBtn + chainBtn;
+  const dlBtn     = `<button class="btn btn-outline btn-sm" id="player-dl-btn" style="opacity:0.35;cursor:default" disabled>⬇️ Download</button>`;
+  document.getElementById('player-actions').innerHTML = plBtn + mintBtn + shareBtn + chainBtn + dlBtn;
 
   // Load audio
   if (chunkCache.has(songId)) {
@@ -970,6 +974,41 @@ function showAudioPlayer(src) {
   audioEl.src   = src;
   document.getElementById('player-audio-wrap').style.display = 'block';
   audioEl.play().catch(() => {});
+  // Auto-play next song when this one ends
+  audioEl.onended = playNextSong;
+  // Activate download button now that audio is ready
+  const dlBtn = document.getElementById('player-dl-btn');
+  if (dlBtn) {
+    dlBtn.disabled = false;
+    dlBtn.style.opacity = '1';
+    dlBtn.style.cursor  = 'pointer';
+    dlBtn.onclick = () => downloadSong(_currentSongId, src);
+  }
+}
+
+function downloadSong(songId, blobUrl) {
+  const s = allSongs.find(x => x.songId === songId);
+  const raw  = s ? s.title : 'song';
+  const safe = raw.replace(/[^a-z0-9 \-_]/gi, '').trim() || 'song';
+  const a    = document.createElement('a');
+  a.href     = blobUrl;
+  a.download = safe + '.mp3';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function playNextSong() {
+  if (_currentSongId === null) return;
+  const list = filteredSongs.length ? filteredSongs : allSongs;
+  const idx  = list.findIndex(s => s.songId === _currentSongId);
+  if (idx === -1 || idx >= list.length - 1) {
+    // End of list — close the player
+    closePlayer();
+    return;
+  }
+  const next = list[idx + 1];
+  if (next) playSong(next.songId);
 }
 
 function closePlayer() {
@@ -1033,6 +1072,7 @@ function renderPlaylistView() {
   if (!wallet) { showToast('Connect wallet to view playlist', true); return; }
   const pl    = getPlaylist();
   const songs = allSongs.filter(s => pl.has('v1-' + s.songId));
+  filteredSongs = songs; // keep auto-play in sync with playlist order
   renderSongGrid(songs, false);
   document.getElementById('song-count').textContent = songs.length + ' saved';
 }
