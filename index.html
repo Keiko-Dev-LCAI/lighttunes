@@ -1003,8 +1003,7 @@ async function playSong(songId) {
   const plBtn     = wallet ? `<button class="btn btn-outline btn-sm" id="player-pl-btn" onclick="doTogglePlaylist(${s.songId});this.textContent=getPlaylist().has('v1-${s.songId}')?'♥ Saved':'♡ Save'">${isInPl ? '♥ Saved' : '♡ Save'}</button>` : '';
   const mintBtn   = `<button class="btn btn-gold btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
   const chainBtn  = s.txHash ? `<a class="btn btn-outline btn-sm" href="${LIGHTSCAN_TX}${s.txHash}" target="_blank">🔗 Chain</a>` : '';
-  const dlBtn     = `<button class="btn btn-outline btn-sm" id="player-dl-btn" style="opacity:0.35;cursor:default" disabled>⬇️ Download</button>`;
-  document.getElementById('player-actions').innerHTML = plBtn + mintBtn + shareBtn + chainBtn + dlBtn;
+  document.getElementById('player-actions').innerHTML = plBtn + mintBtn + shareBtn + chainBtn;
 
   // Load audio
   if (chunkCache.has(songId)) {
@@ -1119,13 +1118,6 @@ function showAudioPlayer(src) {
   // Auto-play next song when this one ends (only fires if loop is off)
   audioEl.onended = playNextSong;
   // Activate download button now that audio is ready
-  const dlBtn = document.getElementById('player-dl-btn');
-  if (dlBtn) {
-    dlBtn.disabled = false;
-    dlBtn.style.opacity = '1';
-    dlBtn.style.cursor  = 'pointer';
-    dlBtn.onclick = () => downloadSong(_currentSongId, src);
-  }
 }
 
 let _loopOn = false;
@@ -1141,17 +1133,7 @@ function toggleLoop() {
   }
 }
 
-function downloadSong(songId, blobUrl) {
-  const s = allSongs.find(x => x.songId === songId);
-  const raw  = s ? s.title : 'song';
-  const safe = raw.replace(/[^a-z0-9 \-_]/gi, '').trim() || 'song';
-  const a    = document.createElement('a');
-  a.href     = blobUrl;
-  a.download = safe + '.mp3';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
+
 
 function playNextSong() {
   if (_currentSongId === null) return;
