@@ -774,7 +774,7 @@ function applyFilters() {
 
   filteredSongs = allSongs.filter(rawS => {
     const s = applyOverride(rawS);
-    if (!isAdmin && isSongHidden(s)) return false;
+    if (isSongHidden(s)) return false;
     if (!s.isPublic) {
       // Private songs only visible to their uploader
       if (!wallet || s.uploader.toLowerCase() !== wallet.toLowerCase()) return false;
@@ -999,7 +999,7 @@ function showChannel(addr) {
   const showExplicit = document.getElementById('explicit-check').checked;
   const songs = allSongs.filter(rawS => {
     const s = applyOverride(rawS);
-    if (isSongHidden(s) && !isAdmin) return false;
+    if (isSongHidden(s)) return false;
     if (!showExplicit && isExplicit(s.description)) return false;
     return s.uploader.toLowerCase() === addr.toLowerCase();
   });
