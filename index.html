@@ -672,7 +672,7 @@ function renderSongGrid(songs, grouped) {
     return;
   }
   empty.style.display = 'none';
-  grid.style.display  = 'grid';
+  grid.style.display  = grouped ? 'block' : 'grid';
   count.textContent   = `${songs.length} song${songs.length !== 1 ? 's' : ''}`;
   const pl = getPlaylist();
 
