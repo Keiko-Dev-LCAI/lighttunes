@@ -183,6 +183,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .album-group{margin-bottom:36px}
 .album-group-header{font-size:22px;font-weight:800;color:var(--purple);margin-bottom:16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);padding-bottom:12px}
 
+/* ── CHANNEL SECTIONS (Public / Private) ── */
+.channel-section{margin-bottom:40px}
+.channel-section-header{font-size:26px;font-weight:800;color:var(--text);padding:16px 22px;border-radius:12px;margin-bottom:22px;display:flex;align-items:center;gap:12px}
+
 /* ── LOADING OVERLAY ── */
 #loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,8,20,.85);z-index:700;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #loading-overlay.visible{display:flex}
@@ -1032,22 +1036,88 @@ function showMyChannel() {
   showChannel(wallet);
 }
 
+// ── Helper: render album-grouped HTML for a set of songs (returns HTML string) ──
+function renderAlbumGroupHtml(songs) {
+  const pl      = getPlaylist();
+  const albums  = {};
+  const noAlbum = [];
+  songs.forEach(s => {
+    const ov  = applyOverride(s);
+    const alb = parseAlbum(ov.description);
+    if (alb) { (albums[alb] = albums[alb] || []).push(s); }
+    else      { noAlbum.push(s); }
+  });
+  let html = '';
+  Object.entries(albums).forEach(([alb, albSongs]) => {
+    albSongs.sort((a, b) => parseTrackNum(applyOverride(a).description) - parseTrackNum(applyOverride(b).description));
+    html += `<div class="album-group"><div class="album-group-header">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+  });
+  if (noAlbum.length) {
+    html += `<div class="album-group"><div class="album-group-header">🎵 Singles</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${noAlbum.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+  }
+  return html;
+}
+
 function showChannel(addr) {
   _showPlaylist  = false;
   _channelFilter = addr;
   currentGenre   = 'all';
   document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('search-input').value = '';
-  const showExplicit = document.getElementById('explicit-check').checked;
+  const showExplicit  = document.getElementById('explicit-check').checked;
+  const isOwnChannel  = wallet && addr.toLowerCase() === wallet.toLowerCase();
+
   const songs = allSongs.filter(rawS => {
     const s = applyOverride(rawS);
     if (isSongHidden(s)) return false;
     if (!showExplicit && isExplicit(s.description)) return false;
+    if (!isOwnChannel && !s.isPublic) return false; // hide private songs on other people's channels
     return s.uploader.toLowerCase() === addr.toLowerCase();
   });
+
   const shortAddr = addr.slice(0,6) + '…' + addr.slice(-4);
-  document.getElementById('feed-title').textContent = `🎤 ${shortAddr}`;
-  renderSongGrid(songs, true); // grouped by album
+  document.getElementById('feed-title').textContent = isOwnChannel ? '🎤 My Songs' : `🎤 ${shortAddr}`;
+
+  const grid  = document.getElementById('song-grid');
+  const empty = document.getElementById('feed-empty');
+  const count = document.getElementById('song-count');
+
+  if (songs.length === 0) {
+    grid.style.display  = 'none';
+    empty.style.display = 'block';
+    count.textContent   = '';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.style.display  = 'block';
+  count.textContent   = `${songs.length} song${songs.length !== 1 ? 's' : ''}`;
+
+  if (isOwnChannel) {
+    // ── Two clearly labelled sections ──
+    const publicSongs  = songs.filter(s => applyOverride(s).isPublic);
+    const privateSongs = songs.filter(s => !applyOverride(s).isPublic);
+    let html = '';
+    if (publicSongs.length) {
+      html += `<div class="channel-section">
+        <div class="channel-section-header" style="background:rgba(82,201,127,0.08);border:1px solid rgba(82,201,127,0.3)">
+          🌐 Public Songs <span style="font-size:18px;font-weight:400;color:var(--muted)">${publicSongs.length} song${publicSongs.length!==1?'s':''}</span>
+        </div>
+        ${renderAlbumGroupHtml(publicSongs)}
+      </div>`;
+    }
+    if (privateSongs.length) {
+      html += `<div class="channel-section">
+        <div class="channel-section-header" style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3)">
+          🔒 Private Songs <span style="font-size:18px;font-weight:400;color:var(--muted)">${privateSongs.length} song${privateSongs.length!==1?'s':''}</span>
+        </div>
+        ${renderAlbumGroupHtml(privateSongs)}
+      </div>`;
+    }
+    grid.innerHTML = html;
+  } else {
+    // Other people's channel — album-grouped, public only
+    grid.innerHTML = renderAlbumGroupHtml(songs);
+  }
 }
 
 function showHiddenSongs() {
