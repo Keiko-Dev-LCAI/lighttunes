@@ -42,6 +42,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .btn-outline{background:transparent;border:2px solid var(--border);color:var(--muted)}
 .btn-outline:hover{border-color:var(--pink);color:var(--pink)}
 .btn-sm{padding:14px 26px;font-size:22px;border-radius:10px}
+.nav-icon{display:none}
 
 /* ── GENRE BAR ── */
 #genre-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:20px}
@@ -252,7 +253,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   #mobile-wallet-banner{display:block}
   .info-btn-full{display:none}
   .info-btn-short{display:inline !important}
-  #btn-channel{font-size:13px;padding:7px 10px}
+  .nav-full{display:none}
+  .nav-icon{display:inline}
 }
 </style>
 </head>
@@ -271,11 +273,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div class="nav-right">
     <button class="btn btn-outline btn-sm mobile-search-btn" onclick="toggleMobileSearch()" style="display:none">🔍</button>
     <button class="btn btn-outline btn-sm" onclick="openInfo()"><span class="info-btn-full">ℹ️ How It Works</span><span class="info-btn-short" style="display:none">ℹ️</span></button>
-    <button class="btn btn-outline btn-sm" id="btn-connect" onclick="connectWallet()">🔗 Connect</button>
-    <button class="btn btn-pink btn-sm" id="btn-upload" onclick="openUpload()" style="display:none">+ Upload</button>
-    <button class="btn btn-outline btn-sm" id="btn-channel" onclick="showMyChannel()" style="display:none">🎤 My Songs</button>
-    <button class="btn btn-outline btn-sm" id="btn-playlist" onclick="showPlaylist()" style="display:none">♥ Playlist</button>
-    <button class="btn btn-sm" id="btn-hidden" onclick="showHiddenSongs()" style="display:none;background:rgba(232,82,82,0.15);border:1px solid rgba(232,82,82,0.4);color:var(--red)">🚫 Hidden</button>
+    <button class="btn btn-outline btn-sm" id="btn-connect" onclick="connectWallet()"><span class="nav-full">🔗 Connect</span><span class="nav-icon">🔗</span></button>
+    <button class="btn btn-pink btn-sm" id="btn-upload" onclick="openUpload()" style="display:none"><span class="nav-full">+ Upload</span><span class="nav-icon">⬆️</span></button>
+    <button class="btn btn-outline btn-sm" id="btn-channel" onclick="showMyChannel()" style="display:none"><span class="nav-full">🎤 My Songs</span><span class="nav-icon">🎤</span></button>
+    <button class="btn btn-outline btn-sm" id="btn-playlist" onclick="showPlaylist()" style="display:none"><span class="nav-full">♥ Playlist</span><span class="nav-icon">♥</span></button>
+    <button class="btn btn-sm" id="btn-hidden" onclick="showHiddenSongs()" style="display:none;background:rgba(232,82,82,0.15);border:1px solid rgba(232,82,82,0.4);color:var(--red)"><span class="nav-full">🚫 Hidden</span><span class="nav-icon">🚫</span></button>
     <button class="btn btn-outline btn-sm" id="btn-disconnect" onclick="disconnectWallet()" style="display:none;font-size:12px">Disconnect</button>
   </div>
 </nav>
