@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LightTunes — Blockchain Music Platform</title>
+<meta name="description" content="Permanent, decentralized music on Lightchain AI. Original artists. No algorithm. No ads. Forever.">
+<style>
+:root{
+  --bg:     #0a0814;
+  --bg2:    #100d1e;
+  --bg3:    #181428;
+  --bg4:    #201b32;
+  --border: rgba(255,255,255,0.08);
+  --text:   #f0eeff;
+  --muted:  #8b85a8;
+  --gold:   #e8b84b;
+  --purple: #9b7fe8;
+  --pink:   #e84b8a;
+  --green:  #52c97f;
+  --red:    #e85252;
+  --blue:   #4b9ee8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:20px;min-height:100vh}
+
+/* ── NAV ── */
+#app-nav{background:rgba(10,8,20,0.97);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;gap:18px;height:80px;position:sticky;top:0;z-index:200;backdrop-filter:blur(12px)}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;flex-shrink:0}
+.nav-logo-icon{font-size:34px}
+.nav-logo-text{font-size:28px;font-weight:800;color:var(--pink);white-space:nowrap}
+.nav-search{flex:1;max-width:600px;position:relative}
+.nav-search input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:28px;padding:13px 22px 13px 50px;font-size:18px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s}
+.nav-search input:focus{border-color:var(--pink)}
+.nav-search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--muted);pointer-events:none}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:10px;border:none;font-size:20px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;white-space:nowrap}
+.btn-pink{background:var(--pink);color:#fff}
+.btn-pink:hover{opacity:.88}
+.btn-gold{background:var(--gold);color:#0a0814}
+.btn-gold:hover{opacity:.88}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--pink);color:var(--pink)}
+.btn-sm{padding:11px 22px;font-size:18px;border-radius:8px}
+
+/* ── GENRE BAR ── */
+#genre-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center}
+#genre-bar::-webkit-scrollbar{display:none}
+.genre-btn{padding:18px 22px;border:none;background:transparent;color:var(--muted);font-size:17px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;border-bottom:3px solid transparent;transition:all .15s;flex-shrink:0}
+.genre-btn:hover{color:var(--text)}
+.genre-btn.active{color:var(--pink);border-bottom-color:var(--pink)}
+#explicit-toggle{margin-left:auto;display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0;border-left:1px solid var(--border)}
+#explicit-toggle label{font-size:15px;color:var(--muted);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+#explicit-toggle input[type=checkbox]{width:16px;height:16px;accent-color:var(--red);cursor:pointer}
+
+/* ── MAIN FEED ── */
+#feed-section{padding:40px 44px}
+#feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+#feed-title{font-size:34px;font-weight:700}
+#song-count{font-size:20px;color:var(--muted)}
+#song-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
+
+/* ── SONG CARD (square) ── */
+.song-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .2s}
+.song-card:hover{border-color:var(--pink);transform:translateY(-2px)}
+.song-art{width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;background:var(--bg3)}
+.song-art img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:1}
+.song-art-gradient{width:100%;height:100%;position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.song-art-play{font-size:52px;opacity:0.55;filter:drop-shadow(0 2px 8px rgba(0,0,0,.8));line-height:1}
+.song-explicit-badge{position:absolute;top:8px;left:8px;background:rgba(232,82,82,0.9);color:#fff;font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;z-index:2}
+.song-card-body{padding:14px 16px}
+.song-genre-badge{display:inline-block;font-size:14px;font-weight:700;padding:4px 12px;border-radius:8px;background:rgba(232,75,138,0.12);color:var(--pink);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+.song-title{font-size:20px;font-weight:700;margin-bottom:7px;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.song-artist{font-size:16px;color:var(--purple);font-weight:600;margin-bottom:5px;cursor:pointer;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.song-artist:hover{color:var(--pink)}
+.song-meta{font-size:15px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.song-avatar{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:9px;font-weight:800;color:white;flex-shrink:0;font-family:monospace}
+.song-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.song-tag{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(75,158,232,0.1);color:var(--blue);cursor:pointer;border:1px solid rgba(75,158,232,0.2);transition:all .15s;white-space:nowrap}
+.song-tag:hover{background:rgba(75,158,232,0.2)}
+.song-actions{display:flex;gap:8px;flex-wrap:wrap}
+.song-action-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:9px 16px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.song-action-btn:hover{border-color:var(--pink);color:var(--pink)}
+.song-action-btn.saved{background:rgba(232,75,138,0.12);border-color:var(--pink);color:var(--pink)}
+.album-badge{display:inline-block;font-size:13px;padding:3px 10px;border-radius:8px;background:rgba(155,127,232,0.12);color:var(--purple);border:1px solid rgba(155,127,232,0.25);font-weight:600;margin-bottom:8px}
+
+/* ── EMPTY / LOADING ── */
+#feed-empty{text-align:center;padding:100px 20px;color:var(--muted)}
+#feed-empty .empty-icon{font-size:80px;margin-bottom:24px}
+#feed-empty h2{font-size:32px;font-weight:700;color:var(--text);margin-bottom:14px}
+#feed-empty p{font-size:20px}
+#feed-loading{text-align:center;padding:80px;color:var(--muted);font-size:22px}
+
+/* ── AUDIO PLAYER MODAL ── */
+#player-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;overflow-y:auto;padding:20px}
+#player-modal.open{display:flex;align-items:flex-start;justify-content:center}
+#player-inner{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:700px;margin:auto;overflow-x:hidden}
+#player-art-wrap{width:100%;aspect-ratio:1/1;position:relative;background:#000;overflow:hidden}
+#player-art-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+#player-art-gradient{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:absolute;inset:0}
+.player-art-note{font-size:120px;opacity:0.35;filter:drop-shadow(0 4px 16px rgba(0,0,0,.8));user-select:none}
+#player-loading{display:none;position:absolute;inset:0;background:rgba(8,6,16,0.92);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;z-index:10}
+.pl-spin{display:inline-block;animation:spin 1.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#player-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.7);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20}
+#player-audio-wrap{padding:0 28px 8px;background:var(--bg3)}
+#player-audio-wrap audio{width:100%;outline:none;accent-color:var(--pink)}
+#player-body{padding:22px 28px}
+#player-title{font-size:26px;font-weight:800;margin-bottom:6px;line-height:1.3}
+#player-artist{font-size:20px;color:var(--purple);font-weight:600;margin-bottom:12px}
+#player-meta{font-size:18px;color:var(--muted);margin-bottom:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+#player-description{font-size:19px;color:var(--text);line-height:1.65;margin-bottom:20px}
+#player-actions{display:flex;gap:10px;flex-wrap:wrap}
+.explicit-label{background:rgba(232,82,82,0.15);border:1px solid rgba(232,82,82,.4);color:var(--red);font-size:14px;font-weight:800;padding:3px 10px;border-radius:6px}
+.private-label{background:rgba(139,133,168,0.12);border:1px solid var(--border);color:var(--muted);font-size:14px;font-weight:700;padding:3px 10px;border-radius:6px}
+
+/* ── UPLOAD MODAL ── */
+#upload-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;overflow-y:auto;padding:20px}
+#upload-modal.open{display:flex;align-items:flex-start;justify-content:center}
+#upload-inner{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:860px;margin:auto;padding:36px;overflow-x:hidden}
+.upload-title{font-size:26px;font-weight:800;margin-bottom:24px}
+.form-group{margin-bottom:20px}
+.form-label{font-size:20px;font-weight:600;color:var(--text);margin-bottom:10px;display:block}
+.form-label span.req{color:var(--red)}
+.form-label span.opt{color:var(--muted);font-weight:400;font-size:17px}
+.form-input,.form-textarea,.form-select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px;font-size:20px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s}
+.form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--pink)}
+.form-textarea{min-height:90px;resize:vertical}
+.form-select option{background:var(--bg3)}
+
+/* ── DROPZONE ── */
+.drop-zone{border:2px dashed var(--border);border-radius:14px;padding:36px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3)}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--pink);background:rgba(232,75,138,0.04)}
+.drop-zone-icon{font-size:48px;margin-bottom:12px}
+.drop-zone-text{font-size:20px;color:var(--muted)}
+.drop-zone-sub{font-size:16px;color:var(--muted);margin-top:6px}
+#file-preview-info{display:none;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:17px;color:var(--text);margin-top:12px}
+.chunk-hint{background:rgba(232,75,138,0.07);border:1px solid rgba(232,75,138,0.25);border-radius:10px;padding:12px 16px;font-size:17px;color:var(--pink);margin-top:10px;line-height:1.5}
+.cover-preview-wrap{margin-top:12px}
+#cover-preview-img{display:none;width:120px;height:120px;border-radius:10px;object-fit:cover;border:1px solid var(--border)}
+
+/* ── GENRE PICKER (upload) ── */
+.genre-picker{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.genre-pill{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:15px;cursor:pointer;transition:all .15s;color:var(--muted);font-family:inherit}
+.genre-pill:hover{border-color:var(--pink);color:var(--text)}
+.genre-pill.selected{background:rgba(232,75,138,0.15);border-color:var(--pink);color:var(--pink);font-weight:700}
+
+/* ── VISIBILITY TOGGLE ── */
+.visibility-group{display:flex;gap:10px;flex-wrap:wrap}
+.vis-opt{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;background:var(--bg3);border:2px solid var(--border);border-radius:12px;cursor:pointer;flex:1;min-width:200px;transition:border-color .15s}
+.vis-opt:hover{border-color:rgba(232,75,138,0.4)}
+.vis-opt.selected{border-color:var(--pink);background:rgba(232,75,138,0.06)}
+.vis-opt input[type=radio]{accent-color:var(--pink);width:18px;height:18px;margin-top:3px;flex-shrink:0;cursor:pointer}
+.vis-opt-body{flex:1}
+.vis-opt-title{font-size:18px;font-weight:700;color:var(--text)}
+.vis-opt-desc{font-size:14px;color:var(--muted);line-height:1.5;margin-top:3px}
+.public-warning{background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3);border-radius:10px;padding:14px 16px;font-size:17px;color:var(--gold);line-height:1.55;margin-top:10px}
+
+/* ── UPLOAD PROGRESS OVERLAY ── */
+#chunk-progress-overlay{position:fixed;inset:0;background:rgba(10,8,20,.97);z-index:800;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px;text-align:center}
+.cp-bar-track{width:100%;max-width:600px;height:12px;background:var(--bg3);border-radius:9px;overflow:hidden}
+#cp-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:9px;width:0%;transition:width .3s}
+.cp-warning{background:rgba(232,82,82,0.12);border:1px solid rgba(232,82,82,.35);border-radius:10px;padding:14px 24px;font-size:20px;color:#ff9090;font-weight:600;max-width:600px}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px 28px;font-size:20px;font-weight:600;color:var(--text);z-index:900;transition:transform .3s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.error{border-color:var(--red);color:#ff9090}
+
+/* ── CHANNEL PAGE ── */
+#channel-banner{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-bottom:1px solid var(--border);padding:30px 36px;display:flex;align-items:center;gap:22px}
+.channel-avatar{width:80px;height:80px;border-radius:50%;background:var(--bg4);border:2px solid var(--pink);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.channel-name{font-size:22px;font-weight:800;margin-bottom:4px;color:var(--pink);font-family:monospace}
+.channel-sub{font-size:17px;color:var(--muted)}
+
+/* ── ALBUM GROUP ── */
+.album-group{margin-bottom:36px}
+.album-group-header{font-size:22px;font-weight:800;color:var(--purple);margin-bottom:16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);padding-bottom:12px}
+
+/* ── LOADING OVERLAY ── */
+#loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,8,20,.85);z-index:700;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+#loading-overlay.visible{display:flex}
+.spinner{width:52px;height:52px;border:5px solid var(--border);border-top-color:var(--pink);border-radius:50%;animation:spin 1s linear infinite}
+.loading-text{font-size:22px;font-weight:700;color:var(--text)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+  #app-nav{padding:0 12px;gap:8px;height:62px}
+  .nav-logo-icon{font-size:24px}
+  .nav-logo-text{font-size:20px}
+  .nav-search{display:none}
+  .nav-search.mobile-open{display:block;position:fixed;top:62px;left:0;right:0;z-index:300;background:var(--bg2);padding:10px 14px;border-bottom:1px solid var(--border);max-width:none}
+  .nav-search.mobile-open input{width:100%}
+  .mobile-search-btn{display:inline-flex !important}
+  #btn-channel,#btn-disconnect{display:none !important}
+  .btn{font-size:15px;padding:9px 14px}
+  .btn-sm{font-size:14px;padding:8px 12px}
+  #genre-bar{padding:0 6px}
+  .genre-btn{padding:12px 12px;font-size:14px}
+  #explicit-toggle{padding:0 8px}
+  #explicit-toggle label{font-size:13px}
+  #feed-section{padding:18px 14px}
+  #feed-title{font-size:26px}
+  #song-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+  .song-card-body{padding:10px 12px}
+  .song-title{font-size:16px}
+  #player-modal{padding:6px}
+  #player-inner{border-radius:12px}
+  #player-body{padding:16px}
+  #player-title{font-size:20px}
+  #upload-modal{padding:8px}
+  #upload-inner{padding:18px 14px;border-radius:12px}
+  .upload-title{font-size:20px}
+  .form-input,.form-textarea{font-size:16px;padding:12px 14px}
+  #chunk-progress-overlay{padding:20px 16px}
+  #toast{width:90%;white-space:normal;text-align:center;font-size:16px}
+  .vis-opt{min-width:140px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav id="app-nav">
+  <a class="nav-logo" href="#" onclick="showFeed();return false">
+    <span class="nav-logo-icon">🎵</span>
+    <span class="nav-logo-text">LightTunes</span>
+  </a>
+  <div class="nav-search">
+    <span class="nav-search-icon">🔍</span>
+    <input id="search-input" type="text" placeholder="Search songs, artists…" oninput="applyFilters()" autocomplete="off">
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-outline btn-sm mobile-search-btn" onclick="toggleMobileSearch()" style="display:none">🔍</button>
+    <button class="btn btn-outline btn-sm" id="btn-connect" onclick="connectWallet()">🔗 Connect</button>
+    <button class="btn btn-pink btn-sm" id="btn-upload" onclick="openUpload()" style="display:none">+ Upload</button>
+    <button class="btn btn-outline btn-sm" id="btn-channel" onclick="showMyChannel()" style="display:none">🎤 My Songs</button>
+    <button class="btn btn-outline btn-sm" id="btn-playlist" onclick="showPlaylist()" style="display:none">♥ Playlist</button>
+    <button class="btn btn-sm" id="btn-hidden" onclick="showHiddenSongs()" style="display:none;background:rgba(232,82,82,0.15);border:1px solid rgba(232,82,82,0.4);color:var(--red)">🚫 Hidden</button>
+    <button class="btn btn-outline btn-sm" id="btn-disconnect" onclick="disconnectWallet()" style="display:none;font-size:12px">Disconnect</button>
+  </div>
+</nav>
+
+<!-- ── GENRE BAR ── -->
+<div id="genre-bar">
+  <button class="genre-btn active" onclick="selectGenre('all',this)">🌐 All</button>
+  <button class="genre-btn" onclick="selectGenre('Hip-Hop',this)">🎤 Hip-Hop</button>
+  <button class="genre-btn" onclick="selectGenre('R&B',this)">🎶 R&amp;B</button>
+  <button class="genre-btn" onclick="selectGenre('Pop',this)">⭐ Pop</button>
+  <button class="genre-btn" onclick="selectGenre('Rock',this)">🎸 Rock</button>
+  <button class="genre-btn" onclick="selectGenre('Electronic',this)">🎛️ Electronic</button>
+  <button class="genre-btn" onclick="selectGenre('Country',this)">🤠 Country</button>
+  <button class="genre-btn" onclick="selectGenre('Jazz',this)">🎷 Jazz</button>
+  <button class="genre-btn" onclick="selectGenre('Classical',this)">🎻 Classical</button>
+  <button class="genre-btn" onclick="selectGenre('Reggae',this)">🌊 Reggae</button>
+  <button class="genre-btn" onclick="selectGenre('Gospel',this)">✨ Gospel</button>
+  <button class="genre-btn" onclick="selectGenre('Blues',this)">🔵 Blues</button>
+  <button class="genre-btn" onclick="selectGenre('Lo-Fi',this)">☕ Lo-Fi</button>
+  <button class="genre-btn" onclick="selectGenre('Original Soundtrack',this)">🎬 OST</button>
+  <button class="genre-btn" onclick="selectGenre('Spoken Word',this)">🎙️ Spoken</button>
+  <button class="genre-btn" onclick="selectGenre('Poetry',this)">📜 Poetry</button>
+  <button class="genre-btn" onclick="selectGenre('Other',this)">🎵 Other</button>
+  <div id="explicit-toggle">
+    <label><input type="checkbox" id="explicit-check" onchange="applyFilters()"> 🔞 Show Explicit</label>
+  </div>
+</div>
+
+<!-- ── MAIN FEED ── -->
+<div id="feed-section">
+  <div id="feed-header">
+    <span id="feed-title">All Songs</span>
+    <span id="song-count"></span>
+  </div>
+  <div id="feed-loading">🎵⛓️ Loading songs from Lightchain…</div>
+  <div id="song-grid" style="display:none"></div>
+  <div id="feed-empty" style="display:none">
+    <div class="empty-icon">🎵</div>
+    <h2>No songs yet</h2>
+    <p>Be the first artist to upload to the blockchain.</p>
+    <br>
+    <button class="btn btn-pink" onclick="connectWallet()" style="margin-top:14px">🔗 Connect Wallet to Upload</button>
+  </div>
+</div>
+
+<!-- ── AUDIO PLAYER MODAL ── -->
+<div id="player-modal">
+  <div id="player-inner">
+    <!-- Album art -->
+    <div style="position:relative">
+      <button id="player-close" onclick="closePlayer()">✕</button>
+      <div id="player-art-wrap">
+        <div id="player-art-gradient"><div class="player-art-note">🎵</div></div>
+        <!-- Loading overlay -->
+        <div id="player-loading">
+          <div id="pl-text" style="font-size:17px;font-weight:700;color:var(--pink);display:flex;align-items:center;gap:8px;text-align:center"><span class="pl-spin">⛓</span> Downloading from blockchain…</div>
+          <div style="width:85%;height:10px;background:var(--bg3);border-radius:6px;overflow:hidden"><div id="pl-bar" style="height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:6px;width:0%;transition:width .25s"></div></div>
+          <div id="pl-count" style="font-size:15px;color:var(--muted)">0 / 0 chunks</div>
+        </div>
+      </div>
+      <!-- Audio controls -->
+      <div id="player-audio-wrap" style="display:none">
+        <audio id="player-audio" controls style="width:100%;display:block;padding:12px 0"></audio>
+      </div>
+    </div>
+    <div id="player-body">
+      <div id="player-title"></div>
+      <div id="player-artist"></div>
+      <div id="player-meta"></div>
+      <div id="player-description"></div>
+      <div id="player-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── UPLOAD MODAL ── -->
+<div id="upload-modal">
+  <div id="upload-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+      <div class="upload-title" style="margin:0">🎵 Upload Song</div>
+      <button onclick="closeUpload()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Audio file -->
+    <div class="form-group">
+      <label class="form-label">Audio File <span class="req">*</span></label>
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+        <div class="drop-zone-icon">🎵</div>
+        <div class="drop-zone-text">Click or drag & drop your song</div>
+        <div class="drop-zone-sub">MP3, WAV, M4A, FLAC, OGG · Any length · Auto-chunked by relay</div>
+      </div>
+      <input type="file" id="file-input" accept=".mp3,.wav,.m4a,.flac,.ogg,audio/*" style="display:none" onchange="handleFileSelect(this)">
+      <div id="file-preview-info"></div>
+      <div id="chunk-hint-box"></div>
+    </div>
+
+    <!-- Cover art -->
+    <div class="form-group">
+      <label class="form-label">Cover Art <span class="opt">(optional — square image)</span></label>
+      <div class="drop-zone" id="cover-drop-zone" style="padding:20px" onclick="document.getElementById('cover-input').click()">
+        <div class="drop-zone-icon" style="font-size:32px">🖼️</div>
+        <div class="drop-zone-text" style="font-size:17px">Click to pick cover image</div>
+      </div>
+      <input type="file" id="cover-input" accept="image/*" style="display:none" onchange="handleCoverSelect(this)">
+      <div class="cover-preview-wrap">
+        <img id="cover-preview-img" alt="Cover art preview">
+      </div>
+    </div>
+
+    <!-- Title -->
+    <div class="form-group">
+      <label class="form-label">Song Title <span class="req">*</span></label>
+      <input class="form-input" id="upload-title" type="text" placeholder="Name your song" maxlength="100">
+    </div>
+
+    <!-- Artist name -->
+    <div class="form-group">
+      <label class="form-label">Artist Name <span class="opt">(optional — defaults to wallet)</span></label>
+      <input class="form-input" id="upload-artist" type="text" placeholder="Your artist name or stage name" maxlength="80">
+    </div>
+
+    <!-- Genre -->
+    <div class="form-group">
+      <label class="form-label">Genre <span class="req">*</span></label>
+      <div class="genre-picker" id="upload-genre-picker"></div>
+      <input type="hidden" id="upload-genre" value="">
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label">Description <span class="opt">(optional)</span></label>
+      <textarea class="form-textarea" id="upload-desc" placeholder="Tell listeners about this song, lyrics preview, credits…" maxlength="500"></textarea>
+    </div>
+
+    <!-- Tags -->
+    <div class="form-group">
+      <label class="form-label">Tags <span class="opt">(optional)</span></label>
+      <input class="form-input" id="upload-tags" type="text" placeholder="e.g. chill, 90s, freestyle — comma separated" maxlength="200">
+    </div>
+
+    <!-- Album name + track number -->
+    <div class="form-group" style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+      <div>
+        <label class="form-label">Album / Collection <span class="opt">(optional)</span></label>
+        <input class="form-input" id="upload-album" type="text" placeholder="e.g. Summer Vibes EP" maxlength="80">
+      </div>
+      <div>
+        <label class="form-label">Track #</label>
+        <input class="form-input" id="upload-track" type="number" placeholder="1" min="1" max="999" style="width:90px">
+      </div>
+    </div>
+
+    <!-- Explicit content -->
+    <div class="form-group" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+      <input type="checkbox" id="upload-explicit" style="width:20px;height:20px;cursor:pointer;accent-color:var(--red)">
+      <label for="upload-explicit" style="cursor:pointer;font-size:17px;color:var(--text)">
+        🔞 Explicit Content
+        <span style="display:block;font-size:14px;color:var(--muted);font-weight:400;margin-top:2px">Song contains adult language, themes, or content</span>
+      </label>
+    </div>
+
+    <!-- Visibility -->
+    <div class="form-group">
+      <label class="form-label">Visibility <span class="req">*</span></label>
+      <div class="visibility-group">
+        <label class="vis-opt selected" id="vis-public">
+          <input type="radio" name="visibility" value="public" checked onchange="updateVisUI()">
+          <div class="vis-opt-body">
+            <div class="vis-opt-title">🌐 Public</div>
+            <div class="vis-opt-desc">Appears in the music catalog for everyone to discover</div>
+          </div>
+        </label>
+        <label class="vis-opt" id="vis-private">
+          <input type="radio" name="visibility" value="private" onchange="updateVisUI()">
+          <div class="vis-opt-body">
+            <div class="vis-opt-title">🔒 Private</div>
+            <div class="vis-opt-desc">Only visible on your channel — for personal archives & playlists</div>
+          </div>
+        </label>
+      </div>
+      <div class="public-warning" id="public-warning">
+        ⚠️ <strong>Public uploads must be original content you own or have rights to.</strong> Copyrighted commercial music will be permanently removed from the app. Your personal playlist is for private listening — upload whatever you like there.
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <button class="btn btn-outline" onclick="closeUpload()" style="flex:1">Cancel</button>
+      <button class="btn btn-pink" onclick="doUpload()" style="flex:2" id="upload-submit-btn">🚀 Upload to Blockchain</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5">Gas-free upload · Relay handles the blockchain · Sign once to prove it's you</p>
+  </div>
+</div>
+
+<!-- ── UPLOAD PROGRESS OVERLAY ── -->
+<div id="chunk-progress-overlay">
+  <div style="font-size:52px">🎵⛓️</div>
+  <div style="font-size:22px;font-weight:800;color:var(--pink);max-width:600px;word-break:break-word" id="cp-filename"></div>
+  <div style="font-size:18px;color:var(--text);min-height:28px" id="cp-status">Preparing upload…</div>
+  <div class="cp-bar-track"><div id="cp-bar"></div></div>
+  <div style="font-size:18px;font-weight:700;color:var(--muted)" id="cp-pct">0%</div>
+  <div class="cp-warning">⚠️ Don't close or refresh this tab — upload in progress</div>
+  <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.65">The relay is handling everything on our server. You can open other tabs while it uploads — just don't close this one.</div>
+</div>
+
+<!-- ── EDIT SONG MODAL ── -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;overflow-y:auto;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:700px;margin:auto;padding:32px;overflow-x:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+      <div style="font-size:24px;font-weight:800">✏️ Edit Song</div>
+      <button onclick="closeEditSong()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Title <span class="req">*</span></label>
+      <input class="form-input" id="edit-title" type="text" maxlength="100">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Artist Name</label>
+      <input class="form-input" id="edit-artist" type="text" maxlength="80">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Genre <span class="req">*</span></label>
+      <div class="genre-picker" id="edit-genre-picker"></div>
+      <input type="hidden" id="edit-genre" value="">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="edit-desc" maxlength="500"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tags</label>
+      <input class="form-input" id="edit-tags" type="text" maxlength="200">
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+      <input type="checkbox" id="edit-explicit" style="width:18px;height:18px;cursor:pointer;accent-color:var(--red)">
+      <label for="edit-explicit" style="cursor:pointer;font-size:17px;color:var(--text)">🔞 Explicit Content</label>
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+      <input type="checkbox" id="edit-public" style="width:18px;height:18px;cursor:pointer;accent-color:var(--pink)">
+      <label for="edit-public" style="cursor:pointer;font-size:17px;color:var(--text)">🌐 Public (visible in catalog)</label>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <button class="btn btn-outline" onclick="closeEditSong()" style="flex:1">Cancel</button>
+      <button class="btn btn-pink" onclick="saveEditSong()" style="flex:2" id="edit-save-btn">💾 Save to Blockchain</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:12px">Only you (the uploader) can edit this song</p>
+  </div>
+</div>
+
+<!-- ── LOADING OVERLAY ── -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Loading…</div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<!-- ── SCRIPTS ── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+<script>
+// ════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════
+const CONTRACT_ADDRESS  = 'DEPLOY_LIGHTTUNES_V1_ADDRESS_HERE'; // TODO: replace after deploy
+const CHAIN_ID          = 9200n;
+const RPC_URL           = 'https://rpc.mainnet.lightchain.ai';
+const LIGHTSCAN_TX      = 'https://mainnet.lightscan.app/tx/';
+const LIGHTSCAN_ADDR    = 'https://mainnet.lightscan.app/address/';
+const ORCAMINT_URL      = 'https://orcamint.xyz';
+const RELAY_SERVER      = 'https://orcavault-production.up.railway.app';
+const GITHUB_THUMB      = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/lighttunes/main/thumbs/';
+const GITHUB_MOD_RAW    = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/lighttunes/main/moderation/';
+const CHUNK_SIZE        = 90000; // 90KB relay chunk size
+
+const ADMIN_WALLETS = [
+  '0xa3a653a8cba0710ff57ac34e2278c603b4259fd3',
+  '0x2b6b64cc13dd6d5acabcf3a5dd72b6ee8004de35',
+];
+
+const CONTRACT_ABI = [
+  "event SongCreated(uint256 indexed songId, address indexed uploader, string title, string artist, string genre, string description, bool isPublic, uint256 totalChunks, uint256 timestamp)",
+  "event SongChunkStored(uint256 indexed songId, uint256 indexed chunkIndex, uint256 totalChunks, string chunkData)",
+  "event SongMetadataUpdated(uint256 indexed songId, address indexed uploader, string title, string artist, string genre, string description, bool isPublic, uint256 timestamp)",
+  "function uploadSong(string title, string artist, string genre, string description, bool isPublic, string dataURI) external",
+  "function updateMetadata(uint256 songId, string title, string artist, string genre, string description, bool isPublic) external",
+];
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let provider        = null;
+let signer          = null;
+let wallet          = null;
+let readProvider    = null;
+let readContract    = null;
+let writeContract   = null;
+let allSongs        = [];
+let filteredSongs   = [];
+let currentGenre    = 'all';
+let selectedFile    = null;
+let selectedDataURI = null;
+let selectedCoverArt = null;  // base64 image for cover art
+let chunkCache      = new Map(); // songId → blob URL
+let hiddenSongs     = new Set();
+let permanentHidden = new Set();
+let ltOverrides     = {};
+let isAdmin         = false;
+let _adminKey       = null;
+let _showPlaylist   = false; // true when in playlist view
+
+// Personal playlist stored in localStorage per wallet
+function getPlaylist() {
+  if (!wallet) return new Set();
+  try {
+    const raw = localStorage.getItem('lt_playlist_' + wallet.toLowerCase());
+    return new Set(JSON.parse(raw) || []);
+  } catch { return new Set(); }
+}
+function togglePlaylist(songKey) {
+  if (!wallet) return false;
+  const pl = getPlaylist();
+  if (pl.has(songKey)) { pl.delete(songKey); } else { pl.add(songKey); }
+  localStorage.setItem('lt_playlist_' + wallet.toLowerCase(), JSON.stringify([...pl]));
+  return pl.has(songKey);
+}
+
+function isSongHidden(s) {
+  const sKey = 'v1-' + s.songId;
+  const sId  = String(s.songId);
+  return hiddenSongs.has(sKey)    || hiddenSongs.has(sId)    ||
+         permanentHidden.has(sKey)|| permanentHidden.has(sId);
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+window.addEventListener('load', async () => {
+  readProvider = new ethers.JsonRpcProvider(RPC_URL);
+  buildGenrePicker('upload-genre-picker', 'upload-genre');
+  await loadHiddenSongs();
+  await loadLtOverrides();
+  await loadPublicHiddenList();
+  if (sessionStorage.getItem('lt_ak')) loadPermanentLists();
+  if (CONTRACT_ADDRESS !== 'DEPLOY_LIGHTTUNES_V1_ADDRESS_HERE') {
+    readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
+    await loadAllSongs();
+  } else {
+    document.getElementById('feed-loading').textContent = '⚠️ Contract not yet deployed — LightTunes coming soon!';
+  }
+});
+
+// ════════════════════════════════════════════════════════
+//  LOAD ALL SONGS FROM CHAIN
+// ════════════════════════════════════════════════════════
+async function loadAllSongs() {
+  try {
+    document.getElementById('feed-loading').style.display = 'block';
+    document.getElementById('song-grid').style.display   = 'none';
+    document.getElementById('feed-empty').style.display  = 'none';
+
+    const [createdEvents, updatedEvents] = await Promise.all([
+      readContract.queryFilter(readContract.filters.SongCreated(), 0, 'latest'),
+      readContract.queryFilter(readContract.filters.SongMetadataUpdated(), 0, 'latest'),
+    ]);
+
+    // Build deduplicated song list from SongCreated events
+    const _seen = new Set();
+    const parsed = createdEvents.map(e => ({
+      songId:      Number(e.args[0]),
+      uploader:    e.args[1],
+      title:       e.args[2],
+      artist:      e.args[3],
+      genre:       e.args[4],
+      description: e.args[5],
+      isPublic:    e.args[6],
+      totalChunks: Number(e.args[7]),
+      timestamp:   Number(e.args[8]),
+      txHash:      e.transactionHash,
+      isChunked:   Number(e.args[7]) > 1,
+      blockNumber: e.blockNumber,
+    })).filter(s => {
+      if (_seen.has(s.songId)) return false;
+      _seen.add(s.songId);
+      return true;
+    });
+
+    // Apply metadata updates (latest event wins)
+    const updateMap = {};
+    updatedEvents.forEach(e => {
+      const id = Number(e.args[0]);
+      if (!updateMap[id] || e.blockNumber > updateMap[id].blockNumber) {
+        updateMap[id] = { blockNumber: e.blockNumber, title: e.args[2], artist: e.args[3], genre: e.args[4], description: e.args[5], isPublic: e.args[6] };
+      }
+    });
+    parsed.forEach(s => {
+      if (updateMap[s.songId]) {
+        Object.assign(s, updateMap[s.songId]);
+      }
+    });
+
+    allSongs = parsed.sort((a, b) => b.timestamp - a.timestamp);
+
+    document.getElementById('feed-loading').style.display = 'none';
+    applyFilters();
+  } catch (err) {
+    console.error('Load error:', err);
+    document.getElementById('feed-loading').textContent = '⚠️ Could not load songs — check connection.';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════
+function renderSongGrid(songs, grouped) {
+  const grid  = document.getElementById('song-grid');
+  const empty = document.getElementById('feed-empty');
+  const count = document.getElementById('song-count');
+
+  if (songs.length === 0) {
+    grid.style.display  = 'none';
+    empty.style.display = 'block';
+    count.textContent   = '';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.style.display  = 'grid';
+  count.textContent   = `${songs.length} song${songs.length !== 1 ? 's' : ''}`;
+  const pl = getPlaylist();
+
+  if (grouped) {
+    // Album-grouped view for channel pages
+    const albums   = {};
+    const noAlbum  = [];
+    songs.forEach(s => {
+      const ov = applyOverride(s);
+      const alb = parseAlbum(ov.description);
+      if (alb) {
+        (albums[alb] = albums[alb] || []).push(s);
+      } else {
+        noAlbum.push(s);
+      }
+    });
+    let html = '';
+    // Named albums first
+    Object.entries(albums).forEach(([alb, albSongs]) => {
+      albSongs.sort((a, b) => parseTrackNum(applyOverride(a).description) - parseTrackNum(applyOverride(b).description));
+      html += `<div class="album-group"><div class="album-group-header">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+    });
+    // Singles
+    if (noAlbum.length) {
+      html += `<div class="album-group"><div class="album-group-header">🎵 Singles</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${noAlbum.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+    }
+    grid.innerHTML = html;
+  } else {
+    grid.innerHTML = songs.map(s => songCardHtml(s, pl)).join('');
+  }
+}
+
+function songCardHtml(rawS, pl) {
+  const s         = applyOverride(rawS);
+  const timeAgo   = formatTimeAgo(s.timestamp);
+  const shortAddr = s.uploader.slice(0,6) + '…' + s.uploader.slice(-4);
+  const displayArtist = s.artist || shortAddr;
+  const genreEmoji = getGenreEmoji(s.genre);
+  const sKey = 'v1-' + s.songId;
+
+  // Gradient colors based on songId
+  const hue1 = (s.songId * 137 + 40) % 360;
+  const hue2 = (s.songId * 137 + 120) % 360;
+  const thumbSrc = `${GITHUB_THUMB}v1_${s.songId}.jpg`;
+  const artHtml  = `<div class="song-art-gradient" style="background:linear-gradient(135deg,hsl(${hue1},55%,20%),hsl(${hue2},65%,12%))"><div class="song-art-play">▶</div></div><img src="${thumbSrc}" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">`;
+  const explicitTag = isExplicit(s.description) ? '<div class="song-explicit-badge">E</div>' : '';
+
+  const isHidden     = hiddenSongs.has(sKey);
+  const isPermanent  = permanentHidden.has(sKey);
+  const hiddenBadge  = (isAdmin && isHidden) ? '<span style="background:rgba(232,82,82,0.12);border:1px solid rgba(232,82,82,.3);color:var(--red);font-size:13px;padding:3px 9px;border-radius:8px;font-weight:700">🚫 Hidden</span>' : '';
+  const cardStyle    = (isAdmin && isHidden) ? ' style="border-color:rgba(232,82,82,0.4);opacity:0.7"' : '';
+
+  const isOwner      = wallet && s.uploader.toLowerCase() === wallet.toLowerCase();
+  const editBtn      = isOwner ? `<button class="song-action-btn" onclick="event.stopPropagation();openEditSong(${s.songId})" style="color:var(--blue);border-color:rgba(75,158,232,0.35)">✏️ Edit</button>` : '';
+  const isInPlaylist = pl.has(sKey);
+  const plBtn        = wallet ? `<button class="song-action-btn${isInPlaylist?' saved':''}" id="plbtn_${s.songId}" onclick="event.stopPropagation();doTogglePlaylist(${s.songId})">${isInPlaylist?'♥':'♡'}</button>` : '';
+  const shareBtn     = `<button class="song-action-btn" onclick="event.stopPropagation();copySongLink(${s.songId},this)">📤</button>`;
+  const mintBtn      = `<button class="song-action-btn" onclick="event.stopPropagation();openOrcaMint(${s.songId})" title="Mint as NFT">🪙</button>`;
+  const adminBtn     = isAdmin
+    ? (isHidden
+        ? `${!isPermanent ? `<button class="song-action-btn" style="color:var(--green);border-color:rgba(82,201,127,0.35)" onclick="event.stopPropagation();unhideSong(${s.songId})">✅</button>` : `<span class="song-action-btn" style="color:var(--muted);cursor:default" title="Permanent">🔒</span>`}
+           <button class="song-action-btn" style="color:#f97316;border-color:rgba(249,115,22,0.35)" onclick="event.stopPropagation();permanentRemoveSong(${s.songId})">🔒 Perm</button>
+           <button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();banAndRemoveSong(${s.songId},'${s.uploader}')">🚫 Ban</button>`
+        : `<button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();hideSong(${s.songId})">🗑️ Remove</button>`)
+    : '';
+
+  const tags     = parseTags(s.description);
+  const tagsHtml = tags.length ? `<div class="song-tags">${tags.map(t => `<span class="song-tag" onclick="event.stopPropagation();filterByTag('${t.replace(/'/g,"\\'")}')"><span style="opacity:0.6">#</span>${escHtml(t)}</span>`).join('')}</div>` : '';
+  const privLabel = !s.isPublic ? ' <span class="private-label">🔒 Private</span>' : '';
+
+  return `<div class="song-card"${cardStyle} onclick="playSong(${s.songId})">
+    <div class="song-art">${artHtml}${explicitTag}</div>
+    <div class="song-card-body">
+      <span class="song-genre-badge">${genreEmoji} ${escHtml(s.genre || 'Other')}</span>
+      <div class="song-title">${escHtml(s.title)}${privLabel}</div>
+      <div class="song-artist" onclick="event.stopPropagation();showChannel('${s.uploader}')">${escHtml(displayArtist)}</div>
+      ${tagsHtml}
+      <div class="song-meta"><span class="song-avatar" style="background:hsl(${parseInt(s.uploader.slice(2,6),16)%360},50%,38%)">${s.uploader.slice(2,4).toUpperCase()}</span><span>${timeAgo}</span>${hiddenBadge}</div>
+      <div class="song-actions">${plBtn}${mintBtn}${shareBtn}${editBtn}${adminBtn}</div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  FILTER & SEARCH
+// ════════════════════════════════════════════════════════
+function selectGenre(genre, btn) {
+  currentGenre = genre;
+  document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _showPlaylist = false;
+  applyFilters();
+  document.getElementById('feed-title').textContent = genre === 'all' ? 'All Songs' : genre + ' Songs';
+}
+
+function applyFilters() {
+  if (_showPlaylist) { renderPlaylistView(); return; }
+  const q           = document.getElementById('search-input').value.toLowerCase().trim();
+  const showExplicit = document.getElementById('explicit-check').checked;
+
+  filteredSongs = allSongs.filter(rawS => {
+    const s = applyOverride(rawS);
+    if (!isAdmin && isSongHidden(s)) return false;
+    if (!s.isPublic) {
+      // Private songs only visible to their uploader
+      if (!wallet || s.uploader.toLowerCase() !== wallet.toLowerCase()) return false;
+    }
+    if (!showExplicit && isExplicit(s.description)) return false;
+    const matchGenre = currentGenre === 'all' || s.genre === currentGenre;
+    let matchQ = true;
+    if (q) {
+      if (q.startsWith('#')) {
+        matchQ = parseTags(s.description).includes(q.slice(1));
+      } else {
+        matchQ = s.title.toLowerCase().includes(q)
+          || (s.artist || '').toLowerCase().includes(q)
+          || cleanDesc(s.description || '').toLowerCase().includes(q)
+          || s.uploader.toLowerCase().includes(q);
+      }
+    }
+    return matchGenre && matchQ;
+  });
+  renderSongGrid(filteredSongs, false);
+}
+
+function filterByTag(tag) {
+  document.getElementById('search-input').value = '#' + tag;
+  currentGenre = 'all';
+  document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.genre-btn').classList.add('active');
+  applyFilters();
+  document.getElementById('feed-title').textContent = '#' + tag;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ════════════════════════════════════════════════════════
+//  PLAY SONG
+// ════════════════════════════════════════════════════════
+async function playSong(songId) {
+  const rawS = allSongs.find(x => x.songId === songId);
+  if (!rawS) return;
+  const s = applyOverride(rawS);
+  const displayArtist = s.artist || (s.uploader.slice(0,6) + '…' + s.uploader.slice(-4));
+
+  document.getElementById('player-modal').classList.add('open');
+  document.getElementById('player-title').textContent  = s.title;
+  document.getElementById('player-artist').textContent = displayArtist;
+  document.getElementById('player-loading').style.display = 'none';
+  document.getElementById('player-audio-wrap').style.display = 'none';
+  const audioEl = document.getElementById('player-audio');
+  audioEl.src = '';
+
+  // Cover art
+  const artWrap = document.getElementById('player-art-wrap');
+  artWrap.querySelectorAll('img').forEach(e => e.remove());
+  const thumbSrc = `${GITHUB_THUMB}v1_${s.songId}.jpg`;
+  const artGrad  = document.getElementById('player-art-gradient');
+  const hue1 = (s.songId * 137 + 40) % 360;
+  const hue2 = (s.songId * 137 + 120) % 360;
+  artGrad.style.background = `linear-gradient(135deg,hsl(${hue1},55%,20%),hsl(${hue2},65%,12%))`;
+  const img = document.createElement('img');
+  img.src     = thumbSrc;
+  img.alt     = s.title;
+  img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1';
+  img.onerror = () => img.remove();
+  artWrap.appendChild(img);
+
+  // Meta
+  const shortAddr = s.uploader.slice(0,6) + '…' + s.uploader.slice(-4);
+  const explicitBadge = isExplicit(s.description) ? '<span class="explicit-label">🔞 Explicit</span>' : '';
+  const privBadge     = !s.isPublic ? '<span class="private-label">🔒 Private</span>' : '';
+  document.getElementById('player-meta').innerHTML =
+    `<span style="background:rgba(232,75,138,0.12);border:1px solid rgba(232,75,138,0.3);color:var(--pink);font-size:14px;padding:3px 12px;border-radius:8px;font-weight:700">${getGenreEmoji(s.genre)} ${escHtml(s.genre||'Other')}</span>
+     <span>by <a href="${LIGHTSCAN_ADDR}${s.uploader}" target="_blank" style="color:var(--purple);font-weight:600;text-decoration:none">${shortAddr}</a></span>
+     <span>${formatTimeAgo(s.timestamp)}</span>
+     ${explicitBadge}${privBadge}`;
+
+  const descClean = cleanDesc(s.description);
+  document.getElementById('player-description').textContent = descClean || '';
+
+  const sKey = 'v1-' + s.songId;
+  const pl   = getPlaylist();
+  const isInPl = pl.has(sKey);
+  const shareBtn  = `<button class="btn btn-outline btn-sm" id="player-share-btn" onclick="copySongLink(${s.songId},this)">📤 Share</button>`;
+  const plBtn     = wallet ? `<button class="btn btn-outline btn-sm" id="player-pl-btn" onclick="doTogglePlaylist(${s.songId});this.textContent=getPlaylist().has('v1-${s.songId}')?'♥ Saved':'♡ Save'">${isInPl ? '♥ Saved' : '♡ Save'}</button>` : '';
+  const mintBtn   = `<button class="btn btn-gold btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
+  const chainBtn  = s.txHash ? `<a class="btn btn-outline btn-sm" href="${LIGHTSCAN_TX}${s.txHash}" target="_blank">🔗 Chain</a>` : '';
+  document.getElementById('player-actions').innerHTML = plBtn + mintBtn + shareBtn + chainBtn;
+
+  // Load audio
+  if (chunkCache.has(songId)) {
+    showAudioPlayer(chunkCache.get(songId));
+    return;
+  }
+
+  if (s.isChunked) {
+    const loadingEl = document.getElementById('player-loading');
+    loadingEl.style.display = 'flex';
+    const plBar   = document.getElementById('pl-bar');
+    const plCount = document.getElementById('pl-count');
+    const plText  = document.getElementById('pl-text');
+    plBar.style.width   = '0%';
+    plCount.textContent = `0 / ${s.totalChunks} chunks`;
+    plText.innerHTML    = '<span class="pl-spin">⛓</span> Downloading from blockchain…';
+
+    try {
+      const fromBlock = s.blockNumber ? Math.max(0, s.blockNumber) : 0;
+      const total     = s.totalChunks;
+      let completed   = 0;
+
+      const chunkPromises = Array.from({length: total}, (_, i) => {
+        const f = readContract.filters.SongChunkStored(songId, i);
+        return readContract.queryFilter(f, fromBlock, 'latest').then(res => {
+          completed++;
+          plBar.style.width   = `${Math.round(completed / total * 100)}%`;
+          plCount.textContent = `${completed} / ${total} chunks`;
+          return res;
+        });
+      });
+
+      const results   = await Promise.all(chunkPromises);
+      const rawChunks = results.map(evts => (evts[0] && evts[0].args[3]) || '');
+      if (!rawChunks.some(c => c)) throw new Error('No audio data found on chain yet');
+
+      plText.innerHTML = '<span class="pl-spin">⛓</span> Assembling audio…';
+
+      // Detect MIME type from first chunk's data URI
+      let mimeType = 'audio/mpeg';
+      const firstNonEmpty = rawChunks.find(c => c.startsWith('data:'));
+      if (firstNonEmpty) {
+        const m = firstNonEmpty.match(/^data:([^;]+);base64,/);
+        if (m) mimeType = m[1];
+      }
+
+      // Carry-over base64 assembly (critical for proper audio boundary handling)
+      const byteArrays = [];
+      let carry = '';
+      for (let ci = 0; ci < rawChunks.length; ci++) {
+        const chunk     = rawChunks[ci];
+        const b64raw    = chunk.includes(',') ? chunk.split(',', 2)[1] : chunk;
+        if (!b64raw) continue;
+        const b64       = carry + b64raw;
+        const alignedLen = Math.floor(b64.length / 4) * 4;
+        carry           = b64.slice(alignedLen);
+        const toDecode  = b64.slice(0, alignedLen);
+        if (!toDecode) continue;
+        const binary = atob(toDecode);
+        const bytes  = new Uint8Array(binary.length);
+        for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+        byteArrays.push(bytes);
+      }
+      if (carry) {
+        try {
+          const padded = carry + '='.repeat((4 - carry.length % 4) % 4);
+          const binary = atob(padded);
+          const bytes  = new Uint8Array(binary.length);
+          for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+          byteArrays.push(bytes);
+        } catch(e) {}
+      }
+
+      const totalLen = byteArrays.reduce((s, a) => s + a.length, 0);
+      const merged   = new Uint8Array(totalLen);
+      let pos = 0;
+      for (const arr of byteArrays) { merged.set(arr, pos); pos += arr.length; }
+
+      const blob    = new Blob([merged], { type: mimeType });
+      const blobUrl = URL.createObjectURL(blob);
+      chunkCache.set(songId, blobUrl);
+
+      loadingEl.style.display = 'none';
+      showAudioPlayer(blobUrl);
+    } catch(err) {
+      plText.textContent = '⚠️ ' + (err.message || 'Could not load audio');
+      document.getElementById('pl-bar').style.display = 'none';
+      document.getElementById('pl-count').style.display = 'none';
+    }
+  } else {
+    // Single-chunk (small file): fetch the one SongChunkStored event
+    try {
+      const f = readContract.filters.SongChunkStored(songId, 0);
+      const evts = await readContract.queryFilter(f, 0, 'latest');
+      if (evts.length && evts[0].args[3]) {
+        const dataURI = evts[0].args[3];
+        chunkCache.set(songId, dataURI);
+        showAudioPlayer(dataURI);
+      }
+    } catch(err) {
+      console.error('Single chunk load error:', err);
+    }
+  }
+}
+
+function showAudioPlayer(src) {
+  const audioEl = document.getElementById('player-audio');
+  audioEl.src   = src;
+  document.getElementById('player-audio-wrap').style.display = 'block';
+  audioEl.play().catch(() => {});
+}
+
+function closePlayer() {
+  document.getElementById('player-modal').classList.remove('open');
+  const audioEl = document.getElementById('player-audio');
+  audioEl.pause();
+  audioEl.src = '';
+  document.getElementById('player-audio-wrap').style.display = 'none';
+  document.getElementById('player-loading').style.display   = 'none';
+  document.getElementById('player-loading').querySelector('#pl-bar').style.display = 'block';
+  document.getElementById('player-loading').querySelector('#pl-count').style.display = 'block';
+}
+
+// ════════════════════════════════════════════════════════
+//  CHANNEL VIEW
+// ════════════════════════════════════════════════════════
+function showMyChannel() {
+  if (!wallet) return;
+  showChannel(wallet);
+}
+
+function showChannel(addr) {
+  _showPlaylist = false;
+  currentGenre  = 'all';
+  document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('search-input').value = addr;
+  const showExplicit = document.getElementById('explicit-check').checked;
+  const songs = allSongs.filter(rawS => {
+    const s = applyOverride(rawS);
+    if (isSongHidden(s) && !isAdmin) return false;
+    if (!showExplicit && isExplicit(s.description)) return false;
+    return s.uploader.toLowerCase() === addr.toLowerCase();
+  });
+  const shortAddr = addr.slice(0,6) + '…' + addr.slice(-4);
+  document.getElementById('feed-title').textContent = `🎤 ${shortAddr}`;
+  renderSongGrid(songs, true); // grouped by album
+}
+
+function showHiddenSongs() {
+  if (!isAdmin) return;
+  _showPlaylist = false;
+  currentGenre  = 'all';
+  document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('search-input').value = '';
+  const hidden = allSongs.filter(s => {
+    const key = 'v1-' + s.songId;
+    return hiddenSongs.has(key) && !permanentHidden.has(key);
+  });
+  document.getElementById('feed-title').textContent = `🚫 Hidden Songs (${hidden.length})`;
+  renderSongGrid(hidden, false);
+}
+
+function showPlaylist() {
+  _showPlaylist = true;
+  document.getElementById('search-input').value = '';
+  document.getElementById('feed-title').textContent = '♥ My Playlist';
+  renderPlaylistView();
+}
+
+function renderPlaylistView() {
+  if (!wallet) { showToast('Connect wallet to view playlist', true); return; }
+  const pl    = getPlaylist();
+  const songs = allSongs.filter(s => pl.has('v1-' + s.songId));
+  renderSongGrid(songs, false);
+  document.getElementById('song-count').textContent = songs.length + ' saved';
+}
+
+function showFeed() {
+  _showPlaylist = false;
+  document.getElementById('search-input').value = '';
+  currentGenre = 'all';
+  document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.genre-btn').classList.add('active');
+  document.getElementById('feed-title').textContent = 'All Songs';
+  applyFilters();
+}
+
+// ════════════════════════════════════════════════════════
+//  PLAYLIST TOGGLE (card button)
+// ════════════════════════════════════════════════════════
+function doTogglePlaylist(songId) {
+  if (!wallet) { showToast('Connect wallet first', true); return; }
+  const sKey  = 'v1-' + songId;
+  const added = togglePlaylist(sKey);
+  showToast(added ? '♥ Added to playlist' : 'Removed from playlist');
+  // Update card button if visible
+  const cardBtn = document.getElementById('plbtn_' + songId);
+  if (cardBtn) {
+    cardBtn.textContent = added ? '♥' : '♡';
+    cardBtn.className   = 'song-action-btn' + (added ? ' saved' : '');
+  }
+  if (_showPlaylist) renderPlaylistView();
+}
+
+// ════════════════════════════════════════════════════════
+//  WALLET
+// ════════════════════════════════════════════════════════
+async function connectWallet() {
+  try {
+    if (!window.ethereum) { showToast('No wallet found — install Trust Wallet', true); return; }
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
+    const network = await provider.getNetwork();
+    if (network.chainId !== CHAIN_ID) {
+      try {
+        await provider.send('wallet_switchEthereumChain', [{ chainId: '0x23F0' }]);
+      } catch {
+        await provider.send('wallet_addEthereumChain', [{
+          chainId:     '0x23F0',
+          chainName:   'Lightchain AI',
+          nativeCurrency: { name: 'LCAI', symbol: 'LCAI', decimals: 18 },
+          rpcUrls:     ['https://rpc.mainnet.lightchain.ai'],
+          blockExplorerUrls: ['https://mainnet.lightscan.app'],
+        }]);
+      }
+    }
+    signer = await provider.getSigner();
+    wallet = await signer.getAddress();
+    if (CONTRACT_ADDRESS !== 'DEPLOY_LIGHTTUNES_V1_ADDRESS_HERE') {
+      writeContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    }
+    isAdmin = ADMIN_WALLETS.includes(wallet.toLowerCase());
+    updateWalletUI(true);
+    applyFilters();
+    showToast('Wallet connected!');
+  } catch (err) {
+    showToast('Connection failed: ' + (err.message || err), true);
+  }
+}
+
+function disconnectWallet() {
+  provider = null; signer = null; wallet = null; writeContract = null; isAdmin = false;
+  updateWalletUI(false);
+  showFeed();
+  showToast('Disconnected');
+}
+
+function updateWalletUI(connected) {
+  document.getElementById('btn-connect').style.display    = connected ? 'none' : '';
+  document.getElementById('btn-upload').style.display     = connected ? '' : 'none';
+  document.getElementById('btn-channel').style.display    = connected ? '' : 'none';
+  document.getElementById('btn-playlist').style.display   = connected ? '' : 'none';
+  document.getElementById('btn-hidden').style.display     = (connected && isAdmin) ? '' : 'none';
+  document.getElementById('btn-disconnect').style.display = connected ? '' : 'none';
+  if (connected) document.getElementById('btn-disconnect').textContent = wallet.slice(0,6) + '…' + wallet.slice(-4);
+}
+
+// ════════════════════════════════════════════════════════
+//  UPLOAD FORM
+// ════════════════════════════════════════════════════════
+function openUpload() {
+  if (!wallet) { connectWallet(); return; }
+  document.getElementById('upload-modal').classList.add('open');
+}
+
+function closeUpload() {
+  document.getElementById('upload-modal').classList.remove('open');
+  selectedFile = null; selectedDataURI = null; selectedCoverArt = null;
+  document.getElementById('file-preview-info').style.display = 'none';
+  document.getElementById('chunk-hint-box').innerHTML = '';
+  document.getElementById('cover-preview-img').style.display = 'none';
+  document.getElementById('upload-title').value = '';
+  document.getElementById('upload-artist').value = '';
+  document.getElementById('upload-desc').value = '';
+  document.getElementById('upload-tags').value = '';
+  document.getElementById('upload-album').value = '';
+  document.getElementById('upload-track').value = '';
+  document.getElementById('upload-explicit').checked = false;
+  document.querySelector('input[name=visibility][value=public]').checked = true;
+  updateVisUI();
+  buildGenrePicker('upload-genre-picker', 'upload-genre');
+}
+
+function updateVisUI() {
+  const val = document.querySelector('input[name=visibility]:checked')?.value || 'public';
+  document.getElementById('vis-public').classList.toggle('selected', val === 'public');
+  document.getElementById('vis-private').classList.toggle('selected', val === 'private');
+  document.getElementById('public-warning').style.display = val === 'public' ? '' : 'none';
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleFileSelect(input) { if (input.files[0]) processFile(input.files[0]); }
+
+function processFile(file) {
+  selectedFile = file;
+  const info = document.getElementById('file-preview-info');
+  const mb   = (file.size / 1024 / 1024).toFixed(2);
+  info.innerHTML = `✅ <strong>${escHtml(file.name)}</strong> &nbsp;·&nbsp; ${mb} MB`;
+  info.style.display = 'block';
+  const reader = new FileReader();
+  reader.onload = e => {
+    selectedDataURI = e.target.result;
+    const chunks  = Math.ceil(selectedDataURI.length / CHUNK_SIZE);
+    const estMins = Math.ceil((chunks * 4) / 60);
+    const timeStr = estMins <= 1 ? 'under a minute' : `~${estMins} minutes`;
+    document.getElementById('chunk-hint-box').innerHTML =
+      `<div class="chunk-hint">✅ Ready — sign once, relay uploads in background. You can browse other tabs while it uploads! (${(file.size/1024/1024).toFixed(1)} MB · ~${chunks} chunks · est. ${timeStr})</div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleCoverSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // Resize to square 400×400
+      const canvas = document.createElement('canvas');
+      const side   = Math.min(img.width, img.height);
+      canvas.width = 400; canvas.height = 400;
+      const ox = (img.width  - side) / 2;
+      const oy = (img.height - side) / 2;
+      canvas.getContext('2d').drawImage(img, ox, oy, side, side, 0, 0, 400, 400);
+      selectedCoverArt = canvas.toDataURL('image/jpeg', 0.82);
+      const preview = document.getElementById('cover-preview-img');
+      preview.src   = selectedCoverArt;
+      preview.style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function doUpload() {
+  if (!wallet || !provider) { showToast('Connect wallet first', true); return; }
+  if (!selectedFile)         { showToast('Select an audio file first', true); return; }
+  if (!selectedDataURI)      { showToast('File still reading — wait a moment', true); return; }
+
+  const title     = document.getElementById('upload-title').value.trim();
+  const artist    = document.getElementById('upload-artist').value.trim();
+  const genre     = document.getElementById('upload-genre').value;
+  const rawDesc   = document.getElementById('upload-desc').value.trim();
+  const rawTags   = document.getElementById('upload-tags').value.trim();
+  const rawAlbum  = document.getElementById('upload-album').value.trim();
+  const rawTrack  = document.getElementById('upload-track').value.trim();
+  const explicit  = document.getElementById('upload-explicit').checked;
+  const isPublic  = document.querySelector('input[name=visibility]:checked')?.value === 'public';
+
+  if (!title)  { showToast('Enter a song title', true); return; }
+  if (!genre)  { showToast('Pick a genre', true); return; }
+
+  // Build description with metadata tags
+  const tagsNorm = rawTags ? rawTags.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')).filter(Boolean).join(',') : '';
+  let desc = rawDesc;
+  if (rawAlbum) desc += (desc ? ' ' : '') + '||album:' + rawAlbum + '||';
+  if (rawTrack) desc += (desc ? ' ' : '') + '||track:' + rawTrack + '||';
+  if (explicit) desc += (desc ? ' ' : '') + '||explicit||';
+  if (tagsNorm) desc += (desc ? ' ' : '') + '||tags:' + tagsNorm + '||';
+
+  closeUpload();
+  const overlay = document.getElementById('chunk-progress-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('cp-filename').textContent = title;
+  document.getElementById('cp-status').textContent   = 'Sign once to authorize upload…';
+  document.getElementById('cp-bar').style.width      = '0%';
+  document.getElementById('cp-pct').textContent      = '0%';
+
+  try {
+    // Sign a simple message (no gas — proves wallet ownership)
+    const message   = `LightTunes upload: ${wallet.toLowerCase()}`;
+    const signerObj = await provider.getSigner();
+    const signature = await signerObj.signMessage(message);
+
+    document.getElementById('cp-status').textContent = 'Uploading to relay server…';
+
+    const formData = new FormData();
+    formData.append('audio',     selectedFile);
+    formData.append('wallet',    wallet.toLowerCase());
+    formData.append('signature', signature);
+    formData.append('title',     title);
+    formData.append('artist',    artist);
+    formData.append('genre',     genre);
+    formData.append('description', desc);
+    formData.append('isPublic',  isPublic ? 'true' : 'false');
+    if (selectedCoverArt) formData.append('thumbnail', selectedCoverArt);
+
+    const startRes = await fetch(`${RELAY_SERVER}/api/lighttunes/upload`, {
+      method: 'POST', body: formData,
+    });
+    if (!startRes.ok) {
+      const err = await startRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Relay server error');
+    }
+    const { jobId } = await startRes.json();
+
+    // Poll for progress
+    await new Promise((resolve, reject) => {
+      const poll = setInterval(async () => {
+        try {
+          const res = await fetch(`${RELAY_SERVER}/api/lighttunes/upload-progress/${jobId}`);
+          const job = await res.json();
+          if (!res.ok || job.error === 'Job not found') {
+            clearInterval(poll);
+            reject(new Error('Server restarted — please upload again'));
+            return;
+          }
+          let pct = 0;
+          if (job.status === 'initializing') pct = 3;
+          else if (job.total > 0) pct = Math.min(99, Math.round((job.progress / job.total) * 100));
+          document.getElementById('cp-bar').style.width = pct + '%';
+          document.getElementById('cp-pct').textContent = pct + '%';
+          if (job.status === 'initializing') {
+            document.getElementById('cp-status').textContent = 'Registering song on chain…';
+          } else if (job.status === 'uploading') {
+            document.getElementById('cp-status').textContent = `Uploading chunk ${job.progress} of ${job.total}…`;
+          } else if (job.status === 'complete') {
+            clearInterval(poll); resolve(job.songId);
+          } else if (job.status === 'error') {
+            clearInterval(poll); reject(new Error(job.error || 'Upload failed'));
+          }
+        } catch(e) { /* network hiccup — keep polling */ }
+      }, 3000);
+    });
+
+    overlay.style.display = 'none';
+    showToast('Song uploaded to the blockchain! 🎉');
+    await loadAllSongs();
+  } catch (err) {
+    overlay.style.display = 'none';
+    showToast('Upload failed: ' + (err.reason || err.message || String(err)), true);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  SHARE & MINT
+// ════════════════════════════════════════════════════════
+function copySongLink(songId, btn) {
+  const url = `${location.origin}${location.pathname}?song=${songId}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅';
+    setTimeout(() => btn.textContent = orig, 2000);
+  }).catch(() => showToast('Copy failed', true));
+}
+
+function openOrcaMint(songId) {
+  const s = allSongs.find(x => x.songId === songId);
+  if (!s) return;
+  window.open(`${ORCAMINT_URL}?title=${encodeURIComponent(s.title)}&description=${encodeURIComponent(s.description||'')}&source=lighttunes`, '_blank');
+}
+
+// ════════════════════════════════════════════════════════
+//  DEEP LINK
+// ════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(location.search);
+  const songId = params.get('song');
+  if (songId) {
+    const wait = setInterval(() => {
+      if (allSongs.length > 0) { clearInterval(wait); playSong(parseInt(songId)); }
+    }, 500);
+    setTimeout(() => clearInterval(wait), 15000);
+  }
+});
+
+// ════════════════════════════════════════════════════════
+//  EDIT SONG
+// ════════════════════════════════════════════════════════
+let _editSongId = null;
+
+function openEditSong(songId) {
+  if (!writeContract) { showToast('V1 contract not deployed yet', true); return; }
+  const s = allSongs.find(x => x.songId === songId);
+  if (!s) return;
+  _editSongId = songId;
+  document.getElementById('edit-title').value    = s.title || '';
+  document.getElementById('edit-artist').value   = s.artist || '';
+  document.getElementById('edit-desc').value     = cleanDesc(s.description);
+  document.getElementById('edit-tags').value     = parseTags(s.description).join(', ');
+  document.getElementById('edit-explicit').checked = isExplicit(s.description);
+  document.getElementById('edit-public').checked   = s.isPublic;
+  buildGenrePicker('edit-genre-picker', 'edit-genre', s.genre || 'Other');
+  document.getElementById('edit-save-btn').textContent = '💾 Save to Blockchain';
+  document.getElementById('edit-save-btn').disabled    = false;
+  document.getElementById('edit-modal').style.cssText = 'display:flex;align-items:flex-start;justify-content:center';
+}
+
+function closeEditSong() {
+  document.getElementById('edit-modal').style.display = 'none';
+  _editSongId = null;
+}
+
+async function saveEditSong() {
+  if (!_editSongId || !writeContract) return;
+  const title    = document.getElementById('edit-title').value.trim();
+  const artist   = document.getElementById('edit-artist').value.trim();
+  const genre    = document.getElementById('edit-genre').value;
+  const rawDesc  = document.getElementById('edit-desc').value.trim();
+  const rawTags  = document.getElementById('edit-tags').value.trim();
+  const explicit = document.getElementById('edit-explicit').checked;
+  const isPublic = document.getElementById('edit-public').checked;
+  if (!title) { showToast('Enter a title', true); return; }
+  if (!genre) { showToast('Pick a genre', true); return; }
+
+  const tagsNorm = rawTags ? rawTags.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')).filter(Boolean).join(',') : '';
+  const s = allSongs.find(x => x.songId === _editSongId);
+  const origAlbum = parseAlbum(s ? s.description : '');
+  const origTrack = parseTrackNum(s ? s.description : '');
+  let desc = rawDesc;
+  if (origAlbum) desc += (desc?' ':'') + '||album:' + origAlbum + '||';
+  if (origTrack) desc += (desc?' ':'') + '||track:' + origTrack + '||';
+  if (explicit)  desc += (desc?' ':'') + '||explicit||';
+  if (tagsNorm)  desc += (desc?' ':'') + '||tags:' + tagsNorm + '||';
+
+  const btn = document.getElementById('edit-save-btn');
+  btn.textContent = '⏳ Waiting for wallet…';
+  btn.disabled    = true;
+  try {
+    const tx = await writeContract.updateMetadata(_editSongId, title, artist, genre, desc, isPublic);
+    btn.textContent = '⛓️ Confirming…';
+    await tx.wait();
+    if (s) { s.title = title; s.artist = artist; s.genre = genre; s.description = desc; s.isPublic = isPublic; }
+    applyFilters();
+    closeEditSong();
+    showToast('Song updated on-chain! ✅');
+  } catch (err) {
+    btn.textContent = '💾 Save to Blockchain';
+    btn.disabled    = false;
+    showToast('Update failed: ' + (err.reason || err.message || err), true);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatTimeAgo(ts) {
+  const diff = Math.floor(Date.now()/1000) - ts;
+  if (diff < 60)    return 'just now';
+  if (diff < 3600)  return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 604800)return Math.floor(diff/86400) + 'd ago';
+  return new Date(ts*1000).toLocaleDateString();
+}
+
+const GENRES = [
+  {v:'Hip-Hop',e:'🎤'},{v:'R&B',e:'🎶'},{v:'Pop',e:'⭐'},{v:'Rock',e:'🎸'},
+  {v:'Electronic',e:'🎛️'},{v:'Country',e:'🤠'},{v:'Jazz',e:'🎷'},{v:'Classical',e:'🎻'},
+  {v:'Reggae',e:'🌊'},{v:'Gospel',e:'✨'},{v:'Blues',e:'🔵'},{v:'Lo-Fi',e:'☕'},
+  {v:'Original Soundtrack',e:'🎬'},{v:'Spoken Word',e:'🎙️'},{v:'Poetry',e:'📜'},{v:'Other',e:'🎵'}
+];
+const GENRE_MAP = Object.fromEntries(GENRES.map(g => [g.v, g.e]));
+function getGenreEmoji(genre) { return GENRE_MAP[genre] || '🎵'; }
+
+function buildGenrePicker(pickerId, hiddenId, preselected) {
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  picker.innerHTML = GENRES.map(g =>
+    `<button type="button" class="genre-pill${preselected===g.v?' selected':''}" data-genre="${g.v}" onclick="selectGenrePill(this,'${hiddenId}')">${g.e} ${escHtml(g.v)}</button>`
+  ).join('');
+  if (preselected) document.getElementById(hiddenId).value = preselected;
+}
+
+function selectGenrePill(btn, hiddenId) {
+  const picker = btn.closest('.genre-picker');
+  picker.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(hiddenId).value = btn.dataset.genre;
+}
+
+function parseTags(desc) {
+  const m = (desc || '').match(/\|\|tags:([^|]+)\|\|/);
+  if (!m) return [];
+  return m[1].split(',').map(t => t.trim()).filter(Boolean);
+}
+
+function parseAlbum(desc) {
+  const m = (desc || '').match(/\|\|album:([^|]+)\|\|/);
+  return m ? m[1].trim() : null;
+}
+
+function parseTrackNum(desc) {
+  const m = (desc || '').match(/\|\|track:(\d+)\|\|/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+function isExplicit(desc) {
+  return /\|\|explicit\|\|/i.test(desc || '');
+}
+
+function cleanDesc(desc) {
+  return (desc || '')
+    .replace(/\s*\|\|album:[^|]+\|\|/g, '')
+    .replace(/\s*\|\|track:\d+\|\|/g, '')
+    .replace(/\s*\|\|explicit\|\|/gi, '')
+    .replace(/\s*\|\|tags:[^|]+\|\|/g, '')
+    .trim();
+}
+
+function toggleMobileSearch() {
+  const bar = document.querySelector('.nav-search');
+  bar.classList.toggle('mobile-open');
+  if (bar.classList.contains('mobile-open')) document.getElementById('search-input').focus();
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3500);
+}
+
+// ════════════════════════════════════════════════════════
+//  ADMIN MODERATION
+// ════════════════════════════════════════════════════════
+async function loadHiddenSongs() {
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/hidden`);
+    if (res.ok) {
+      const data = await res.json();
+      hiddenSongs = new Set((data.hidden || []).map(String));
+    }
+  } catch(e) {}
+}
+
+async function loadPermanentLists() {
+  const key = sessionStorage.getItem('lt_ak');
+  if (!key) return;
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/moderation-lists?adminKey=${encodeURIComponent(key)}`);
+    if (res.ok) {
+      const data = await res.json();
+      const relayHidden = new Set((data.permanent_hidden || []).map(String));
+      permanentHidden = new Set([...permanentHidden, ...relayHidden]);
+    }
+  } catch(e) {}
+}
+
+async function loadPublicHiddenList() {
+  try {
+    const res = await fetch(GITHUB_MOD_RAW + 'permanent_hidden.json?t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      permanentHidden = new Set((data || []).map(String));
+    }
+  } catch(e) {}
+}
+
+async function loadLtOverrides() {
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/overrides`);
+    if (res.ok) ltOverrides = await res.json();
+  } catch(e) {}
+}
+
+function applyOverride(s) {
+  const key = 'v1-' + s.songId;
+  const ov  = ltOverrides[key];
+  if (!ov) return s;
+  return Object.assign({}, s, {
+    title:       ov.title       !== undefined ? ov.title       : s.title,
+    artist:      ov.artist      !== undefined ? ov.artist      : s.artist,
+    genre:       ov.genre       !== undefined ? ov.genre       : s.genre,
+    description: ov.description !== undefined ? ov.description : s.description,
+    uploader:    ov.uploader    !== undefined ? ov.uploader    : s.uploader,
+    isPublic:    ov.isPublic    !== undefined ? ov.isPublic    : s.isPublic,
+  });
+}
+
+function getAdminKey() {
+  if (_adminKey) return _adminKey;
+  _adminKey = sessionStorage.getItem('lt_ak');
+  if (!_adminKey) {
+    _adminKey = prompt('Enter admin password:');
+    if (_adminKey) { sessionStorage.setItem('lt_ak', _adminKey); loadPermanentLists(); }
+  }
+  return _adminKey;
+}
+
+async function hideSong(songId) {
+  const s = allSongs.find(x => x.songId === songId);
+  if (!confirm(`Remove "${s ? s.title : 'Song ' + songId}" from the public catalog?\n\nIt stays on the blockchain but won\'t be visible in the app.`)) return;
+  const key = getAdminKey(); if (!key) return;
+  const sKey = 'v1-' + songId;
+  try {
+    const res  = await fetch(`${RELAY_SERVER}/api/lighttunes/hide`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({songId: sKey, adminKey: key}) });
+    const data = await res.json();
+    if (!res.ok) { if (res.status===401) { _adminKey=null; sessionStorage.removeItem('lt_ak'); } showToast(data.error||'Failed',true); return; }
+    hiddenSongs.add(sKey);
+    applyFilters();
+    showToast('Song removed from catalog');
+  } catch(e) { showToast('Error: '+e.message,true); }
+}
+
+async function unhideSong(songId) {
+  const s   = allSongs.find(x => x.songId === songId);
+  if (!confirm(`Restore "${s?s.title:'Song '+songId}" to the catalog?`)) return;
+  const key = getAdminKey(); if (!key) return;
+  try {
+    const res  = await fetch(`${RELAY_SERVER}/api/lighttunes/unhide`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({songId: 'v1-'+songId, adminKey: key}) });
+    const data = await res.json();
+    if (!res.ok) { if (res.status===401) { _adminKey=null; sessionStorage.removeItem('lt_ak'); } showToast(data.error||'Failed',true); return; }
+    hiddenSongs.delete('v1-'+songId);
+    applyFilters();
+    showToast('Song restored to catalog');
+  } catch(e) { showToast('Error: '+e.message,true); }
+}
+
+async function permanentRemoveSong(songId) {
+  const s   = allSongs.find(x => x.songId === songId);
+  const lbl = s ? `"${s.title}"` : `Song ${songId}`;
+  if (!confirm(`PERMANENTLY remove ${lbl}?\n\nThis cannot be undone. The song will never appear on LightTunes again.`)) return;
+  const key = getAdminKey(); if (!key) return;
+  const sKey = 'v1-' + songId;
+  try {
+    const res  = await fetch(`${RELAY_SERVER}/api/lighttunes/permanent-remove`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({songId: sKey, adminKey: key}) });
+    const data = await res.json();
+    if (!res.ok) { if (res.status===401) { _adminKey=null; sessionStorage.removeItem('lt_ak'); } showToast(data.error||'Failed',true); return; }
+    permanentHidden.add(sKey); hiddenSongs.add(sKey);
+    showHiddenSongs();
+    showToast('Permanently removed');
+  } catch(e) { showToast('Error: '+e.message,true); }
+}
+
+async function banAndRemoveSong(songId, uploaderWallet) {
+  const s   = allSongs.find(x => x.songId === songId);
+  const lbl = s ? `"${s.title}"` : `Song ${songId}`;
+  const shortW = uploaderWallet ? uploaderWallet.slice(0,6)+'...'+uploaderWallet.slice(-4) : 'unknown';
+  if (!confirm(`BAN uploader (${shortW}) and PERMANENTLY remove ${lbl}?\n\nThe wallet can never upload again. Cannot be undone.`)) return;
+  const key = getAdminKey(); if (!key) return;
+  const sKey = 'v1-' + songId;
+  try {
+    const res  = await fetch(`${RELAY_SERVER}/api/lighttunes/ban-wallet`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({wallet: uploaderWallet, songId: sKey, adminKey: key}) });
+    const data = await res.json();
+    if (!res.ok) { if (res.status===401) { _adminKey=null; sessionStorage.removeItem('lt_ak'); } showToast(data.error||'Failed',true); return; }
+    permanentHidden.add(sKey); hiddenSongs.add(sKey);
+    showHiddenSongs();
+    showToast('Wallet banned + song permanently removed');
+  } catch(e) { showToast('Error: '+e.message,true); }
+}
+</script>
+
+<footer style="background:var(--bg2);border-top:1px solid var(--border);padding:18px 44px;text-align:center;font-size:15px;color:var(--muted);line-height:1.65;margin-top:40px">
+  Free to listen · Gas-free uploads via relay · Public uploads must be original content you own. Copyright violations will be permanently removed. All uploads are recorded on the Lightchain blockchain and cannot be erased from the chain — only removed from this interface.
+</footer>
+<div style="text-align:center;padding:8px 16px 16px;font-size:13px;opacity:0.5;">Questions or ideas? <a href="#" onclick="(function(){navigator.clipboard.writeText('0xA3a653a8cBA0710ff57Ac34E2278C603B4259FD3').catch(function(){});window.open('https://orcamail.ai','_blank');var t=document.getElementById('_dctoast');if(t){t.style.display='block';setTimeout(function(){t.style.display='none'},3000);}})();return false;" style="color:var(--pink);font-weight:600;text-decoration:none;">Contact Developer via OrcaMail 🐬</a></div>
+<div id="_dctoast" style="display:none;position:fixed;bottom:24px;right:24px;background:var(--pink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 16px rgba(0,0,0,.4);">Wallet copied! Opening OrcaMail…</div>
+</body>
+</html>
