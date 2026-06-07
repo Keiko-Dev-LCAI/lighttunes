@@ -453,11 +453,25 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       </div>
     </div>
 
-    <div style="display:flex;gap:12px;margin-top:8px">
-      <button class="btn btn-outline" onclick="closeUpload()" style="flex:1">Cancel</button>
-      <button class="btn btn-pink" onclick="doUpload()" style="flex:2" id="upload-submit-btn">🚀 Upload to Blockchain</button>
+    <!-- Upload fee display -->
+    <div id="upload-fee-box" style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3);border-radius:10px;padding:14px 18px;margin-top:16px;font-size:18px;color:var(--gold);line-height:1.5">
+      💳 <strong>Upload fee:</strong> <span id="upload-fee-display">Loading…</span><br>
+      <span style="font-size:15px;color:var(--muted)">Fees may change at any time. Current fee is shown above before you confirm.</span>
     </div>
-    <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5">Gas-free upload · Relay handles the blockchain · Sign once to prove it's you</p>
+
+    <!-- Acknowledgement checkbox -->
+    <label style="display:flex;align-items:flex-start;gap:14px;margin-top:18px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px">
+      <input type="checkbox" id="upload-ack" onchange="document.getElementById('upload-submit-btn').disabled=!this.checked" style="width:22px;height:22px;flex-shrink:0;margin-top:3px;accent-color:var(--pink)">
+      <span style="font-size:17px;color:var(--text);line-height:1.6">
+        I understand that: <strong>the upload fee is non-refundable</strong>, even if my content is removed · uploads are <strong>permanent on the blockchain</strong> and cannot be undone · I <strong>must mark explicit content</strong> using the Explicit toggle — failure to do so may result in removal without refund · if uploading as Public, I have the right to distribute this content · <strong>upload fees may change at any time</strong> without notice
+      </span>
+    </label>
+
+    <div style="display:flex;gap:12px;margin-top:14px">
+      <button class="btn btn-outline" onclick="closeUpload()" style="flex:1">Cancel</button>
+      <button class="btn btn-pink" onclick="doUpload()" style="flex:2" id="upload-submit-btn" disabled>🚀 Upload to Blockchain</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5">You'll be asked to sign once to authorize upload, then send the fee — relay handles the rest.</p>
   </div>
 </div>
 
@@ -488,7 +502,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="info-section">
       <div class="info-section-title">🚀 How Uploading Works</div>
       <p>When you upload a song, it gets split into small chunks and stored permanently on the Lightchain blockchain. This takes 1–3 minutes depending on file size. Once it's on-chain, it cannot be deleted — ever. Make sure you're happy with it before uploading.</p>
-      <p style="margin-top:14px">A small LCAI relay fee is required to process your upload. You'll need a wallet with LCAI to get started.</p>
+      <p style="margin-top:14px"><strong>Upload fee: $0.50 USD</strong> (paid in LCAI at current market rate). Viewing is always free. The upload fee is <strong>non-refundable</strong> — even if your content is later removed for rule violations. Upload prices may change at any time; the current fee is always shown before you confirm.</p>
+      <p style="margin-top:14px"><strong>Explicit content:</strong> You <em>must</em> use the Explicit toggle when uploading content that contains adult language, themes, or material not suitable for all audiences. Failure to mark explicit content may result in removal without refund.</p>
     </div>
 
     <div class="info-section">
@@ -818,12 +833,18 @@ function songCardHtml(rawS, pl) {
   const plBtn        = wallet ? `<button class="song-action-btn${isInPlaylist?' saved':''}" id="plbtn_${s.songId}" onclick="event.stopPropagation();doTogglePlaylist(${s.songId})">${isInPlaylist?'♥':'♡'}</button>` : '';
   const shareBtn     = `<button class="song-action-btn" onclick="event.stopPropagation();copySongLink(${s.songId},this)">📤</button>`;
   const mintBtn      = `<button class="song-action-btn" onclick="event.stopPropagation();openOrcaMint(${s.songId})" title="Mint as NFT">🪙</button>`;
+  const isForceExplicit = ltOverrides['v1-' + s.songId]?.forceExplicit;
+  const explicitAdminBtn = isAdmin && !isHidden
+    ? (isForceExplicit
+        ? `<button class="song-action-btn" style="color:var(--muted);border-color:rgba(139,133,168,0.35)" onclick="event.stopPropagation();adminClearExplicit(${s.songId})" title="Remove explicit flag">🔞 Clear</button>`
+        : `<button class="song-action-btn" style="color:#f97316;border-color:rgba(249,115,22,0.35)" onclick="event.stopPropagation();adminMarkExplicit(${s.songId})" title="Mark as explicit">🔞 Explicit</button>`)
+    : '';
   const adminBtn     = isAdmin
     ? (isHidden
         ? `${!isPermanent ? `<button class="song-action-btn" style="color:var(--green);border-color:rgba(82,201,127,0.35)" onclick="event.stopPropagation();unhideSong(${s.songId})">✅</button>` : `<span class="song-action-btn" style="color:var(--muted);cursor:default" title="Permanent">🔒</span>`}
            <button class="song-action-btn" style="color:#f97316;border-color:rgba(249,115,22,0.35)" onclick="event.stopPropagation();permanentRemoveSong(${s.songId})">🔒 Perm</button>
            <button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();banAndRemoveSong(${s.songId},'${s.uploader}')">🚫 Ban</button>`
-        : `<button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();hideSong(${s.songId})">🗑️ Remove</button><button class="song-action-btn" style="color:#f97316;border-color:rgba(249,115,22,0.35)" onclick="event.stopPropagation();permanentRemoveSong(${s.songId})">🔒 Perm</button>`)
+        : `${explicitAdminBtn}<button class="song-action-btn" style="color:var(--red);border-color:rgba(232,82,82,0.35)" onclick="event.stopPropagation();hideSong(${s.songId})">🗑️ Remove</button><button class="song-action-btn" style="color:#f97316;border-color:rgba(249,115,22,0.35)" onclick="event.stopPropagation();permanentRemoveSong(${s.songId})">🔒 Perm</button>`)
     : '';
 
   const tags     = parseTags(s.description);
@@ -1316,9 +1337,29 @@ function updateWalletUI(connected) {
 // ════════════════════════════════════════════════════════
 //  UPLOAD FORM
 // ════════════════════════════════════════════════════════
-function openUpload() {
+async function openUpload() {
   if (!wallet) { connectWallet(); return; }
+  // Reset acknowledgement checkbox and submit button
+  const ack = document.getElementById('upload-ack');
+  ack.checked = false;
+  document.getElementById('upload-submit-btn').disabled = true;
+  document.getElementById('upload-fee-display').textContent = 'Loading…';
   document.getElementById('upload-modal').classList.add('open');
+  // Fetch current fee
+  try {
+    const res  = await fetch(`${RELAY_SERVER}/api/lighttunes/fee`);
+    const data = await res.json();
+    if (data.fee_lcai) {
+      document.getElementById('upload-fee-display').textContent =
+        `$${data.fee_usd.toFixed(2)} USD · ~${data.fee_lcai.toFixed(2)} LCAI at current price`;
+    } else {
+      document.getElementById('upload-fee-display').textContent = 'Unable to load fee — try again';
+    }
+    window._ltFeeData = data;
+  } catch(e) {
+    document.getElementById('upload-fee-display').textContent = 'Unable to load fee — check connection';
+    window._ltFeeData = null;
+  }
 }
 
 function closeUpload() {
@@ -1337,6 +1378,9 @@ function closeUpload() {
   document.querySelector('input[name=visibility][value=public]').checked = true;
   updateVisUI();
   buildGenrePicker('upload-genre-picker', 'upload-genre');
+  document.getElementById('upload-ack').checked = false;
+  document.getElementById('upload-submit-btn').disabled = true;
+  window._ltFeeData = null;
 }
 
 function updateVisUI() {
@@ -1434,9 +1478,26 @@ async function doUpload() {
   document.getElementById('cp-pct').textContent      = '0%';
 
   try {
-    // Sign a simple message (no gas — proves wallet ownership)
-    const message   = `LightTunes upload: ${wallet.toLowerCase()}`;
+    // ── Step 1: Send upload fee ──────────────────────────────────────────────
+    const feeData = window._ltFeeData;
+    if (!feeData || !feeData.fee_wallet || !feeData.fee_lcai) {
+      throw new Error('Upload fee not loaded — close and reopen the upload form');
+    }
+    document.getElementById('cp-status').textContent = `Sending upload fee (~${feeData.fee_lcai.toFixed(2)} LCAI)…`;
+
     const signerObj = await provider.getSigner();
+    const feeWei    = ethers.parseEther(String(Math.ceil(feeData.fee_lcai * 1.01 * 1000) / 1000)); // 1% buffer
+    const feeTx     = await signerObj.sendTransaction({
+      to:    feeData.fee_wallet,
+      value: feeWei,
+    });
+    document.getElementById('cp-status').textContent = 'Waiting for fee confirmation…';
+    await feeTx.wait(1);
+    const paymentTxHash = feeTx.hash;
+
+    // ── Step 2: Sign to prove wallet ownership ───────────────────────────────
+    document.getElementById('cp-status').textContent = 'Sign to authorize upload…';
+    const message   = `LightTunes upload: ${wallet.toLowerCase()}`;
     const signature = await signerObj.signMessage(message);
 
     document.getElementById('cp-status').textContent = 'Uploading to relay server…';
@@ -1449,7 +1510,8 @@ async function doUpload() {
     formData.append('artist',    artist);
     formData.append('genre',     genre);
     formData.append('description', desc);
-    formData.append('isPublic',  isPublic ? 'true' : 'false');
+    formData.append('isPublic',       isPublic ? 'true' : 'false');
+    formData.append('paymentTxHash',  paymentTxHash);
     if (coverToUpload) formData.append('thumbnail', coverToUpload);
 
     const startRes = await fetch(`${RELAY_SERVER}/api/lighttunes/upload`, {
@@ -1729,11 +1791,14 @@ function applyOverride(s) {
   const key = 'v1-' + s.songId;
   const ov  = ltOverrides[key];
   if (!ov) return s;
+  let desc = ov.description !== undefined ? ov.description : s.description;
+  // If admin force-marked explicit, inject the tag into description
+  if (ov.forceExplicit && !desc.includes('||explicit||')) desc += ' ||explicit||';
   return Object.assign({}, s, {
     title:       ov.title       !== undefined ? ov.title       : s.title,
     artist:      ov.artist      !== undefined ? ov.artist      : s.artist,
     genre:       ov.genre       !== undefined ? ov.genre       : s.genre,
-    description: ov.description !== undefined ? ov.description : s.description,
+    description: desc,
     uploader:    ov.uploader    !== undefined ? ov.uploader    : s.uploader,
     isPublic:    ov.isPublic    !== undefined ? ov.isPublic    : s.isPublic,
   });
@@ -1808,6 +1873,36 @@ async function banAndRemoveSong(songId, uploaderWallet) {
     permanentHidden.add(sKey); hiddenSongs.add(sKey);
     applyFilters();
     showToast('Wallet banned + song permanently removed');
+  } catch(e) { showToast('Error: '+e.message,true); }
+}
+
+async function adminMarkExplicit(songId) {
+  const key = getAdminKey(); if (!key) return;
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/set-override`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ songId: 'v1-' + songId, adminKey: key, forceExplicit: true })
+    });
+    const data = await res.json();
+    if (!res.ok) { if (res.status===401) { _adminKey=null; sessionStorage.removeItem('lt_ak'); } showToast(data.error||'Failed',true); return; }
+    ltOverrides['v1-' + songId] = Object.assign(ltOverrides['v1-' + songId] || {}, { forceExplicit: true });
+    applyFilters();
+    showToast('Song marked as explicit');
+  } catch(e) { showToast('Error: '+e.message,true); }
+}
+
+async function adminClearExplicit(songId) {
+  const key = getAdminKey(); if (!key) return;
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/set-override`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ songId: 'v1-' + songId, adminKey: key, forceExplicit: false })
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error||'Failed',true); return; }
+    if (ltOverrides['v1-' + songId]) delete ltOverrides['v1-' + songId].forceExplicit;
+    applyFilters();
+    showToast('Explicit flag cleared');
   } catch(e) { showToast('Error: '+e.message,true); }
 }
 </script>
