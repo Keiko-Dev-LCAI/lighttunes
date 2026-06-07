@@ -560,6 +560,7 @@ let isAdmin         = false;
 let _adminKey       = null;
 let _showPlaylist   = false; // true when in playlist view
 let _currentSongId  = null; // song currently open in player (for auto-play next)
+let _channelFilter  = null; // wallet address when viewing a channel (keeps search bar clean)
 
 // Personal playlist stored in localStorage per wallet
 function getPlaylist() {
@@ -781,7 +782,8 @@ function applyFilters() {
       if (!wallet || s.uploader.toLowerCase() !== wallet.toLowerCase()) return false;
     }
     if (!showExplicit && isExplicit(s.description)) return false;
-    const matchGenre = currentGenre === 'all' || s.genre === currentGenre;
+    const matchGenre   = currentGenre === 'all' || s.genre === currentGenre;
+    const matchChannel = !_channelFilter || s.uploader.toLowerCase() === _channelFilter.toLowerCase();
     let matchQ = true;
     if (q) {
       if (q.startsWith('#')) {
@@ -793,7 +795,7 @@ function applyFilters() {
           || s.uploader.toLowerCase().includes(q);
       }
     }
-    return matchGenre && matchQ;
+    return matchGenre && matchChannel && matchQ;
   });
   renderSongGrid(filteredSongs, false);
 }
@@ -1031,10 +1033,11 @@ function showMyChannel() {
 }
 
 function showChannel(addr) {
-  _showPlaylist = false;
-  currentGenre  = 'all';
+  _showPlaylist  = false;
+  _channelFilter = addr;
+  currentGenre   = 'all';
   document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('search-input').value = addr;
+  document.getElementById('search-input').value = '';
   const showExplicit = document.getElementById('explicit-check').checked;
   const songs = allSongs.filter(rawS => {
     const s = applyOverride(rawS);
@@ -1049,8 +1052,9 @@ function showChannel(addr) {
 
 function showHiddenSongs() {
   if (!isAdmin) return;
-  _showPlaylist = false;
-  currentGenre  = 'all';
+  _showPlaylist  = false;
+  _channelFilter = null;
+  currentGenre   = 'all';
   document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('search-input').value = '';
   const hidden = allSongs.filter(s => {
@@ -1062,7 +1066,8 @@ function showHiddenSongs() {
 }
 
 function showPlaylist() {
-  _showPlaylist = true;
+  _showPlaylist  = true;
+  _channelFilter = null;
   document.getElementById('search-input').value = '';
   document.getElementById('feed-title').textContent = '♥ My Playlist';
   renderPlaylistView();
@@ -1078,7 +1083,8 @@ function renderPlaylistView() {
 }
 
 function showFeed() {
-  _showPlaylist = false;
+  _showPlaylist  = false;
+  _channelFilter = null;
   document.getElementById('search-input').value = '';
   currentGenre = 'all';
   document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
