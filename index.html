@@ -213,16 +213,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* ── RESPONSIVE ── */
 @media(max-width:700px){
-  #app-nav{padding:0 12px;gap:8px;height:62px}
-  .nav-logo-icon{font-size:24px}
-  .nav-logo-text{font-size:20px}
+  #app-nav{padding:0 10px;gap:4px;height:58px}
+  .nav-logo-icon{font-size:22px}
+  .nav-logo-text{font-size:18px}
+  .nav-right{gap:4px}
   .nav-search{display:none}
-  .nav-search.mobile-open{display:block;position:fixed;top:62px;left:0;right:0;z-index:300;background:var(--bg2);padding:10px 14px;border-bottom:1px solid var(--border);max-width:none}
+  .nav-search.mobile-open{display:block;position:fixed;top:58px;left:0;right:0;z-index:300;background:var(--bg2);padding:10px 14px;border-bottom:1px solid var(--border);max-width:none}
   .nav-search.mobile-open input{width:100%}
   .mobile-search-btn{display:inline-flex !important}
   #btn-disconnect{display:none !important}
+  #btn-connect{display:none !important}
   .btn{font-size:15px;padding:9px 14px}
-  .btn-sm{font-size:14px;padding:8px 12px}
+  .btn-sm{font-size:20px;padding:7px 10px;border-radius:8px;min-width:38px;text-align:center}
   #genre-bar{padding:0 6px}
   .genre-btn{padding:12px 12px;font-size:14px}
   #explicit-toggle{padding:0 8px}
