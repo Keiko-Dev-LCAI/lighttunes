@@ -717,8 +717,7 @@ window.addEventListener('load', async () => {
   if (sessionStorage.getItem('lt_ak')) loadPermanentLists();
   readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
   await loadAllSongs();
-  // Show welcome modal for first-time visitors
-  if (!localStorage.getItem('lt_welcomed')) openInfo();
+  // Info modal available via the ℹ️ button — not auto-shown on load
 });
 
 // ════════════════════════════════════════════════════════
