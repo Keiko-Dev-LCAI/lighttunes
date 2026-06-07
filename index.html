@@ -1224,6 +1224,9 @@ async function doUpload() {
   if (explicit) desc += (desc ? ' ' : '') + '||explicit||';
   if (tagsNorm) desc += (desc ? ' ' : '') + '||tags:' + tagsNorm + '||';
 
+  const fileToUpload  = selectedFile;
+  const coverToUpload = selectedCoverArt;
+
   closeUpload();
   const overlay = document.getElementById('chunk-progress-overlay');
   overlay.style.display = 'flex';
@@ -1241,7 +1244,7 @@ async function doUpload() {
     document.getElementById('cp-status').textContent = 'Uploading to relay server…';
 
     const formData = new FormData();
-    formData.append('audio',     selectedFile);
+    formData.append('audio',     fileToUpload);
     formData.append('wallet',    wallet.toLowerCase());
     formData.append('signature', signature);
     formData.append('title',     title);
@@ -1249,7 +1252,7 @@ async function doUpload() {
     formData.append('genre',     genre);
     formData.append('description', desc);
     formData.append('isPublic',  isPublic ? 'true' : 'false');
-    if (selectedCoverArt) formData.append('thumbnail', selectedCoverArt);
+    if (coverToUpload) formData.append('thumbnail', coverToUpload);
 
     const startRes = await fetch(`${RELAY_SERVER}/api/lighttunes/upload`, {
       method: 'POST', body: formData,
