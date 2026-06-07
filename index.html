@@ -187,6 +187,19 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .channel-section{margin-bottom:40px}
 .channel-section-header{font-size:26px;font-weight:800;color:var(--text);padding:16px 22px;border-radius:12px;margin-bottom:22px;display:flex;align-items:center;gap:12px}
 
+/* ── INFO / HOW IT WORKS MODAL ── */
+#info-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:600;overflow-y:auto;padding:20px}
+#info-modal.open{display:flex;align-items:flex-start;justify-content:center}
+#info-inner{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:900px;margin:auto;padding:44px;overflow-x:hidden}
+.info-section{margin-bottom:32px;padding-bottom:32px;border-bottom:1px solid var(--border)}
+.info-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.info-section-title{font-size:28px;font-weight:800;color:var(--pink);margin-bottom:16px}
+.info-section p,.info-section li{font-size:22px;line-height:1.65;color:var(--text)}
+.info-section ul{padding-left:28px;margin-top:12px}
+.info-section li{margin-bottom:10px}
+.info-section code{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:19px;color:var(--purple)}
+.info-warning-box{background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3);border-radius:10px;padding:18px 22px;font-size:22px;color:var(--gold);line-height:1.6}
+
 /* ── LOADING OVERLAY ── */
 #loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,8,20,.85);z-index:700;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #loading-overlay.visible{display:flex}
@@ -242,6 +255,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
   <div class="nav-right">
     <button class="btn btn-outline btn-sm mobile-search-btn" onclick="toggleMobileSearch()" style="display:none">🔍</button>
+    <button class="btn btn-outline btn-sm" onclick="openInfo()">ℹ️ How It Works</button>
     <button class="btn btn-outline btn-sm" id="btn-connect" onclick="connectWallet()">🔗 Connect</button>
     <button class="btn btn-pink btn-sm" id="btn-upload" onclick="openUpload()" style="display:none">+ Upload</button>
     <button class="btn btn-outline btn-sm" id="btn-channel" onclick="showMyChannel()" style="display:none">🎤 My Songs</button>
@@ -458,6 +472,61 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.65">The relay is handling everything on our server. You can open other tabs while it uploads — just don't close this one.</div>
 </div>
 
+<!-- ── INFO / HOW IT WORKS MODAL ── -->
+<div id="info-modal">
+  <div id="info-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px">
+      <div style="font-size:36px;font-weight:800;color:var(--pink)">🎵 LightTunes — How It Works</div>
+      <button onclick="closeInfo()" style="background:none;border:none;color:var(--muted);font-size:30px;cursor:pointer;line-height:1">✕</button>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">🔭 Vision</div>
+      <p>Music belongs to artists, not corporations. LightTunes gives musicians a permanent home for their work — one that no company can take away. Built on Lightchain AI, powered by the community. No algorithm. No ads. No middleman. Forever.</p>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">🚀 How Uploading Works</div>
+      <p>When you upload a song, it gets split into small chunks and stored permanently on the Lightchain blockchain. This takes 1–3 minutes depending on file size. Once it's on-chain, it cannot be deleted — ever. Make sure you're happy with it before uploading.</p>
+      <p style="margin-top:14px">A small LCAI relay fee is required to process your upload. You'll need a wallet with LCAI to get started.</p>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">🌐 Public vs 🔒 Private</div>
+      <p><strong style="color:var(--green)">Public</strong> — your song appears in the main catalog for everyone to discover. Only upload music you created or have the rights to distribute publicly.</p>
+      <p style="margin-top:12px"><strong style="color:var(--gold)">Private</strong> — only visible on your own channel. Good for personal listening, covers, or music you're not ready to share yet.</p>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">♥ Your Personal Playlist</div>
+      <p>Tap ♥ on any song — public or private — to add it to your personal playlist. Hit "♥ Playlist" in the nav to view your saved songs. Press play on any song and it will play straight through automatically, one after another, in order.</p>
+      <p style="margin-top:12px">Your playlist is private — only you can see it, stored in your browser.</p>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">💡 Tips & Tricks</div>
+      <ul>
+        <li>Group songs into albums: add <code>||album:Album Name||</code> and <code>||track:1||</code> to your description</li>
+        <li>Add searchable tags: use <code>#tag</code> in your description (e.g. <code>#chill #90s</code>)</li>
+        <li>Mark explicit content: add <code>||explicit||</code> to your description</li>
+        <li>Use the ♥ button to save any song to your personal playlist — public or private</li>
+        <li>Click any artist name to visit their channel and see all their music</li>
+        <li>Use the 📤 button to copy a direct link to any song and share it with anyone</li>
+        <li>Use the 🪙 button to mint your song as an NFT on OrcaMint</li>
+      </ul>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">⚠️ Copyright</div>
+      <div class="info-warning-box">Only upload music you own or have rights to distribute publicly. Uploading commercial music as Public may violate copyright law. Private uploads for personal listening are your own responsibility.<br><br>If you have a takedown request, contact us via OrcaMail and we will remove the song promptly.</div>
+    </div>
+
+    <div style="text-align:center;margin-top:36px">
+      <button class="btn btn-pink" onclick="closeInfo()" style="font-size:24px;padding:18px 52px">Got it — Let's Listen! 🎵</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── EDIT SONG MODAL ── -->
 <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;overflow-y:auto;padding:20px">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:700px;margin:auto;padding:32px;overflow-x:hidden">
@@ -601,7 +670,20 @@ window.addEventListener('load', async () => {
   if (sessionStorage.getItem('lt_ak')) loadPermanentLists();
   readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
   await loadAllSongs();
+  // Show welcome modal for first-time visitors
+  if (!localStorage.getItem('lt_welcomed')) openInfo();
 });
+
+// ════════════════════════════════════════════════════════
+//  INFO / HOW IT WORKS MODAL
+// ════════════════════════════════════════════════════════
+function openInfo() {
+  document.getElementById('info-modal').classList.add('open');
+}
+function closeInfo() {
+  document.getElementById('info-modal').classList.remove('open');
+  localStorage.setItem('lt_welcomed', '1');
+}
 
 // ════════════════════════════════════════════════════════
 //  LOAD ALL SONGS FROM CHAIN
