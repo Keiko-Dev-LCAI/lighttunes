@@ -863,6 +863,7 @@ function songCardHtml(rawS, pl) {
   const isInPlaylist = pl.has(sKey);
   const plBtn        = wallet ? `<button class="song-action-btn${isInPlaylist?' saved':''}" id="plbtn_${s.songId}" onclick="event.stopPropagation();doTogglePlaylist(${s.songId})">${isInPlaylist?'♥':'♡'}</button>` : '';
   const shareBtn     = `<button class="song-action-btn" onclick="event.stopPropagation();copySongLink(${s.songId},this)">📤</button>`;
+  const lcShareBtn   = `<button class="song-action-btn" onclick="event.stopPropagation();shareToLightTunes(${s.songId},${JSON.stringify(s.title)},${JSON.stringify(displayArtist)})" title="Share to LightChat" style="color:#9b7fe8;border-color:rgba(155,127,232,0.35)">🔗 Share</button>`;
   const mintBtn      = `<button class="song-action-btn" onclick="event.stopPropagation();openOrcaMint(${s.songId})" title="Mint as NFT">🪙</button>`;
   const isForceExplicit = ltOverrides['v1-' + s.songId]?.forceExplicit;
   const explicitAdminBtn = isAdmin && !isHidden
@@ -890,7 +891,7 @@ function songCardHtml(rawS, pl) {
       <div class="song-artist" onclick="event.stopPropagation();showChannel('${s.uploader}')">${escHtml(displayArtist)}</div>
       ${tagsHtml}
       <div class="song-meta"><span class="song-avatar" style="background:hsl(${parseInt(s.uploader.slice(2,6),16)%360},50%,38%)">${s.uploader.slice(2,4).toUpperCase()}</span><span>${timeAgo}</span>${hiddenBadge}</div>
-      <div class="song-actions">${plBtn}${mintBtn}${shareBtn}${editBtn}${adminBtn}</div>
+      <div class="song-actions">${plBtn}${mintBtn}${shareBtn}${lcShareBtn}${editBtn}${adminBtn}</div>
     </div>
   </div>`;
 }
@@ -998,7 +999,7 @@ async function playSong(songId) {
   const sKey = 'v1-' + s.songId;
   const pl   = getPlaylist();
   const isInPl = pl.has(sKey);
-  const shareBtn  = `<button class="btn btn-outline btn-sm" id="player-share-btn" onclick="copySongLink(${s.songId},this)">📤 Share</button>`;
+  const shareBtn  = `<button class="btn btn-outline btn-sm" id="player-share-btn" onclick="copySongLink(${s.songId},this)">📤 Share</button><button class="btn btn-outline btn-sm" onclick="shareToLightTunes(${s.songId},${JSON.stringify(s.title)},${JSON.stringify(s.artist||s.uploader)})" style="color:#9b7fe8;border-color:rgba(155,127,232,0.35)">🔗 LightChat</button>`;
   const plBtn     = wallet ? `<button class="btn btn-outline btn-sm" id="player-pl-btn" onclick="doTogglePlaylist(${s.songId});this.textContent=getPlaylist().has('v1-${s.songId}')?'♥ Saved':'♡ Save'">${isInPl ? '♥ Saved' : '♡ Save'}</button>` : '';
   const mintBtn   = `<button class="btn btn-gold btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
   const chainBtn  = s.txHash ? `<a class="btn btn-outline btn-sm" href="${LIGHTSCAN_TX}${s.txHash}" target="_blank">🔗 Chain</a>` : '';
@@ -1598,6 +1599,16 @@ function copySongLink(songId, btn) {
     btn.textContent = '✅';
     setTimeout(() => btn.textContent = orig, 2000);
   }).catch(() => showToast('Copy failed', true));
+}
+
+function shareToLightTunes(songId, title, artist) {
+  const params = new URLSearchParams({
+    app: 'lighttunes',
+    title: title || 'Untitled',
+    url: 'https://keiko-dev-lcai.github.io/lighttunes#song-' + songId,
+    desc: artist || ''
+  });
+  window.location.href = 'https://lightchat.chat/share?' + params.toString();
 }
 
 function openOrcaMint(songId) {
