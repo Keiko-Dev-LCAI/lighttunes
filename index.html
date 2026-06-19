@@ -633,6 +633,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 <!-- ── SCRIPTS ── -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+<script type="module">
+  try {
+    const { EthereumProvider } = await import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3');
+    window.WCEthereumProvider = EthereumProvider;
+  } catch(e) { console.warn('WalletConnect unavailable:', e); }
+</script>
 <script>
 // ════════════════════════════════════════════════════════
 //  CONFIG
@@ -667,6 +673,7 @@ const CONTRACT_ABI = [
 let provider        = null;
 let signer          = null;
 let wallet          = null;
+let _wcProv         = null;
 let readProvider    = null;
 let readContract    = null;
 let writeContract   = null;
@@ -1320,7 +1327,10 @@ function doTogglePlaylist(songId) {
 // ════════════════════════════════════════════════════════
 async function connectWallet() {
   try {
-    if (!window.ethereum) { showToast('No wallet found — install Trust Wallet', true); return; }
+    if (!window.ethereum) {
+      if (window.WCEthereumProvider) { await connectViaWalletConnect(); return; }
+      showToast('No wallet found. Use WalletConnect or open in your wallet browser.', true); return;
+    }
     provider = new ethers.BrowserProvider(window.ethereum);
     await provider.send('eth_requestAccounts', []);
     const network = await provider.getNetwork();
@@ -1349,8 +1359,36 @@ async function connectWallet() {
   }
 }
 
+async function connectViaWalletConnect() {
+  if (!window.WCEthereumProvider) { showToast('WalletConnect not loaded yet. Try again.', true); return; }
+  try {
+    _wcProv = await window.WCEthereumProvider.init({
+      projectId: '3c6a0da53258912a28923198ddac3333',
+      chains: [9200], optionalChains: [1], showQrModal: true,
+      metadata: { name: 'LightTunes', description: 'Music on Lightchain', url: 'https://lighttunes.win', icons: ['https://lighttunes.win/favicon.png'] },
+      rpcMap: { 9200: 'https://rpc.mainnet.lightchain.ai' }
+    });
+    await _wcProv.enable();
+    provider = new ethers.BrowserProvider(_wcProv);
+    await provider.send('eth_requestAccounts', []);
+    try { await provider.send('wallet_switchEthereumChain', [{ chainId: '0x23F0' }]); }
+    catch { await provider.send('wallet_addEthereumChain', [{ chainId: '0x23F0', chainName: 'Lightchain AI', nativeCurrency: { name: 'LCAI', symbol: 'LCAI', decimals: 18 }, rpcUrls: ['https://rpc.mainnet.lightchain.ai'], blockExplorerUrls: ['https://mainnet.lightscan.app'] }]); }
+    signer = await provider.getSigner();
+    wallet = await signer.getAddress();
+    writeContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    isAdmin = ADMIN_WALLETS.includes(wallet.toLowerCase());
+    updateWalletUI(true);
+    applyFilters();
+    showToast('Wallet connected!');
+  } catch(e) {
+    if (!e || e.message?.includes('User rejected') || e.message?.includes('rejected') || e.code === 4001) return;
+    showToast('WalletConnect failed. Try a different wallet.', true);
+  }
+}
+
 function disconnectWallet() {
   provider = null; signer = null; wallet = null; writeContract = null; isAdmin = false;
+  if (_wcProv) { try { _wcProv.disconnect(); } catch {} _wcProv = null; }
   updateWalletUI(false);
   showFeed();
   showToast('Disconnected');
