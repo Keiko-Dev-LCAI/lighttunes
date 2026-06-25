@@ -676,7 +676,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <div class="info-section">
       <div class="info-section-title">♥ Your Personal Playlist</div>
-      <p>Tap ♥ on any song — public or private — to add it to your personal playlist. Hit "♥ Playlist" in the nav to view your saved songs. Press play on any song and it will play straight through automatically, one after another, in order.</p>
+      <p>Tap ♥ on any song — public or private — to add it to your personal playlist. Open <strong>♥ Playlist</strong> in the nav and press play there — your saved songs will continue one after another in order. Browsing All Songs or genres plays one track at a time unless you turn on <strong>🔁 Loop</strong>.</p>
       <p style="margin-top:12px">Your playlist is private — only you can see it, stored in your browser.</p>
     </div>
 
@@ -818,8 +818,9 @@ let permanentHidden = new Set();
 let ltOverrides     = {};
 let isAdmin         = false;
 let _adminKey       = null;
-let _showPlaylist   = false; // true when in playlist view
-let _currentSongId  = null; // song currently open in player
+let _showPlaylist      = false; // true when in playlist view
+let _playlistPlayback  = false; // true only when user pressed play from ♥ Playlist
+let _currentSongId     = null; // song currently open in player
 let _channelFilter  = null; // wallet address when viewing a channel (keeps search bar clean)
 
 // Personal playlist stored in localStorage per wallet
@@ -1214,6 +1215,7 @@ function filterByTag(tag) {
 async function playSong(songId) {
   const rawS = allSongs.find(x => x.songId === songId);
   if (!rawS) return;
+  _playlistPlayback = _showPlaylist;
   const s = applyOverride(rawS);
   const displayArtist = s.artist || (s.uploader.slice(0,6) + '…' + s.uploader.slice(-4));
 
@@ -1384,7 +1386,15 @@ function showAudioPlayer(src) {
   audioEl.loop  = _loopOn;
   document.getElementById('player-audio-wrap').style.display = 'block';
   audioEl.play().catch(() => {});
-  audioEl.onended = null;
+  audioEl.onended = (_playlistPlayback && !_loopOn) ? playNextFromPlaylist : null;
+}
+
+function playNextFromPlaylist() {
+  if (!_playlistPlayback || !_showPlaylist || _currentSongId === null) return;
+  const idx = filteredSongs.findIndex(s => s.songId === _currentSongId);
+  if (idx === -1 || idx >= filteredSongs.length - 1) return;
+  const next = filteredSongs[idx + 1];
+  if (next) playSong(next.songId);
 }
 
 let _loopOn = false;
@@ -1403,6 +1413,7 @@ function toggleLoop() {
 
 
 function closePlayer() {
+  _playlistPlayback = false;
   document.getElementById('player-modal').classList.remove('open');
   const audioEl = document.getElementById('player-audio');
   audioEl.pause();
@@ -1539,7 +1550,9 @@ function showPlaylist() {
   _channelFilter = null;
   document.getElementById('search-input').value = '';
   document.getElementById('feed-title').textContent = '♥ My Playlist';
-  setFeedHeaderExtras({ subtitle: FEED_TIP_SUBTITLE });
+  setFeedHeaderExtras({
+    subtitle: 'Songs you saved with ♥ — open this view and press play to hear them <strong>one after another</strong>.',
+  });
   renderPlaylistView();
 }
 
