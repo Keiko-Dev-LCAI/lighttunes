@@ -1596,6 +1596,9 @@ async function doUpload() {
     });
     if (!startRes.ok) {
       const err = await startRes.json().catch(() => ({}));
+      if (startRes.status === 409 || err.busy) {
+        throw new Error('Another upload is in progress on the relay — wait a few minutes and try again.');
+      }
       throw new Error(err.error || 'Relay server error');
     }
     const { jobId } = await startRes.json();
