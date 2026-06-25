@@ -120,6 +120,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 #player-meta{font-size:20px;color:var(--muted);margin-bottom:18px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 #player-description{font-size:21px;color:var(--text);line-height:1.65;margin-bottom:20px}
 #player-actions{display:flex;gap:10px;flex-wrap:wrap}
+/* ── TIP MODAL ── */
+#tip-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:600;overflow-y:auto;padding:20px;align-items:flex-start;justify-content:center}
+#tip-modal.open{display:flex}
+#tip-inner{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;margin:auto;padding:32px}
+.tip-preset-row{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.tip-preset-btn{flex:1;min-width:120px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 12px;cursor:pointer;font-family:inherit;color:var(--text);transition:all .15s}
+.tip-preset-btn:hover,.tip-preset-btn.selected{border-color:var(--pink);background:rgba(232,75,138,0.1)}
+.tip-preset-usd{font-size:22px;font-weight:800;color:var(--pink)}
+.tip-preset-lcai{font-size:14px;color:var(--muted);margin-top:4px}
+.tip-split-note{font-size:16px;color:var(--muted);line-height:1.55;margin-top:12px;padding:12px 14px;background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.25);border-radius:10px}
 .explicit-label{background:rgba(232,82,82,0.15);border:1px solid rgba(232,82,82,.4);color:var(--red);font-size:14px;font-weight:800;padding:3px 10px;border-radius:6px}
 .private-label{background:rgba(139,133,168,0.12);border:1px solid var(--border);color:var(--muted);font-size:14px;font-weight:700;padding:3px 10px;border-radius:6px}
 
@@ -384,6 +394,31 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
 </div>
 
+<!-- ── TIP ARTIST MODAL ── -->
+<div id="tip-modal">
+  <div id="tip-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:26px;font-weight:800">💰 Tip Artist</div>
+      <button onclick="closeTipModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer">✕</button>
+    </div>
+    <p id="tip-artist-line" style="font-size:20px;color:var(--muted);margin:0 0 8px;line-height:1.5"></p>
+    <p id="tip-song-line" style="font-size:18px;color:var(--text);margin:0 0 4px;font-weight:600"></p>
+    <div id="tip-preset-row" class="tip-preset-row"></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label class="form-label">Custom amount (LCAI)</label>
+      <input class="form-input" id="tip-custom" type="number" min="1" step="0.01" placeholder="e.g. 50">
+    </div>
+    <div class="tip-split-note">
+      <strong>90%</strong> goes directly to the artist's wallet · <strong>10%</strong> supports LightTunes (relay &amp; platform). You'll confirm <strong>two</strong> quick wallet sends.
+    </div>
+    <div style="display:flex;gap:12px;margin-top:22px">
+      <button class="btn btn-outline" onclick="closeTipModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-pink" onclick="confirmTip()" style="flex:2" id="tip-send-btn">💰 Send Tip</button>
+    </div>
+    <p id="tip-fee-status" style="font-size:14px;color:var(--muted);text-align:center;margin-top:14px"></p>
+  </div>
+</div>
+
 <!-- ── UPLOAD MODAL ── -->
 <div id="upload-modal">
   <div id="upload-inner">
@@ -558,6 +593,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
 
     <div class="info-section">
+      <div class="info-section-title">💰 Tip Artists</div>
+      <p>Love a track? Hit <strong>💰 Tip Artist</strong> while listening. Tips go straight to the creator's wallet in LCAI — <strong>90% to the artist</strong>, <strong>10% to LightTunes</strong> to keep the relay running. Listening stays free; tipping is optional.</p>
+    </div>
+
+    <div class="info-section">
       <div class="info-section-title">♥ Your Personal Playlist</div>
       <p>Tap ♥ on any song — public or private — to add it to your personal playlist. Hit "♥ Playlist" in the nav to view your saved songs. Press play on any song and it will play straight through automatically, one after another, in order.</p>
       <p style="margin-top:12px">Your playlist is private — only you can see it, stored in your browser.</p>
@@ -573,6 +613,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <li>Click any artist name to visit their channel and see all their music</li>
         <li>Use the 📤 button to copy a direct link to any song and share it with anyone</li>
         <li>Use the 🪙 button to mint your song as an NFT on OrcaMint</li>
+        <li>Use <strong>💰 Tip Artist</strong> to send LCAI directly to musicians you enjoy</li>
       </ul>
     </div>
 
@@ -662,6 +703,7 @@ const RELAY_SERVER      = 'https://orcavault-production.up.railway.app';
 const GITHUB_THUMB      = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/lighttunes/main/thumbs/';
 const GITHUB_MOD_RAW    = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/lighttunes/main/moderation/';
 const CHUNK_SIZE        = 90000; // 90KB relay chunk size
+const TIP_PLATFORM_PCT  = 10;      // % of tip to LightTunes fee wallet
 
 const ADMIN_WALLETS = [
   '0xa3a653a8cba0710ff57ac34e2278c603b4259fd3',
@@ -974,6 +1016,7 @@ function songCardHtml(rawS, pl) {
   const editBtn      = isOwner ? `<button class="song-action-btn" onclick="event.stopPropagation();openEditSong(${s.songId})" style="color:var(--blue);border-color:rgba(75,158,232,0.35)">✏️ Edit</button>` : '';
   const isInPlaylist = pl.has(sKey);
   const plBtn        = wallet ? `<button class="song-action-btn${isInPlaylist?' saved':''}" id="plbtn_${s.songId}" onclick="event.stopPropagation();doTogglePlaylist(${s.songId})">${isInPlaylist?'♥':'♡'}</button>` : '';
+  const tipCardBtn   = !isOwner ? `<button class="song-action-btn" onclick="event.stopPropagation();openTipModal(${s.songId})" title="Tip artist" style="color:var(--gold);border-color:rgba(232,184,75,0.4)">💰</button>` : '';
   const shareBtn     = `<button class="song-action-btn" onclick="event.stopPropagation();copySongLink(${s.songId},this)">📤</button>`;
   const lcShareBtn   = `<button class="song-action-btn" onclick="event.stopPropagation();shareToLightTunes(${s.songId},${JSON.stringify(s.title)},${JSON.stringify(displayArtist)})" title="Share to LightChat" style="color:#9b7fe8;border-color:rgba(155,127,232,0.35)">🔗 Share</button>`;
   const mintBtn      = `<button class="song-action-btn" onclick="event.stopPropagation();openOrcaMint(${s.songId})" title="Mint as NFT">🪙</button>`;
@@ -1003,7 +1046,7 @@ function songCardHtml(rawS, pl) {
       <div class="song-artist" onclick="event.stopPropagation();showChannel('${s.uploader}')">${escHtml(displayArtist)}</div>
       ${tagsHtml}
       <div class="song-meta"><span class="song-avatar" style="background:hsl(${parseInt(s.uploader.slice(2,6),16)%360},50%,38%)">${s.uploader.slice(2,4).toUpperCase()}</span><span>${timeAgo}</span>${hiddenBadge}</div>
-      <div class="song-actions">${plBtn}${mintBtn}${shareBtn}${lcShareBtn}${editBtn}${adminBtn}</div>
+      <div class="song-actions">${tipCardBtn}${plBtn}${mintBtn}${shareBtn}${lcShareBtn}${editBtn}${adminBtn}</div>
     </div>
   </div>`;
 }
@@ -1117,9 +1160,11 @@ async function playSong(songId) {
   const isInPl = pl.has(sKey);
   const shareBtn  = `<button class="btn btn-outline btn-sm" id="player-share-btn" onclick="copySongLink(${s.songId},this)">📤 Share</button><button class="btn btn-outline btn-sm" onclick="shareToLightTunes(${s.songId},${JSON.stringify(s.title)},${JSON.stringify(s.artist||s.uploader)})" style="color:#9b7fe8;border-color:rgba(155,127,232,0.35)">🔗 LightChat</button>`;
   const plBtn     = wallet ? `<button class="btn btn-outline btn-sm" id="player-pl-btn" onclick="doTogglePlaylist(${s.songId});this.textContent=getPlaylist().has('v1-${s.songId}')?'♥ Saved':'♡ Save'">${isInPl ? '♥ Saved' : '♡ Save'}</button>` : '';
+  const isOwnSong = wallet && s.uploader.toLowerCase() === wallet.toLowerCase();
+  const tipBtn    = !isOwnSong ? `<button class="btn btn-pink btn-sm" onclick="openTipModal(${s.songId})">💰 Tip Artist</button>` : '';
   const mintBtn   = `<button class="btn btn-gold btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
   const chainBtn  = s.txHash ? `<a class="btn btn-outline btn-sm" href="${LIGHTSCAN_TX}${s.txHash}" target="_blank">🔗 Chain</a>` : '';
-  document.getElementById('player-actions').innerHTML = plBtn + mintBtn + shareBtn + chainBtn;
+  document.getElementById('player-actions').innerHTML = tipBtn + plBtn + mintBtn + shareBtn + chainBtn;
 
   // Load audio
   if (chunkCache.has(songId)) {
@@ -1755,6 +1800,129 @@ async function doUpload() {
   } catch (err) {
     overlay.style.display = 'none';
     showToast('Upload failed: ' + (err.reason || err.message || String(err)), true);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  TIP ARTIST
+// ════════════════════════════════════════════════════════
+let _tipTarget = null;
+
+function closeTipModal() {
+  document.getElementById('tip-modal').classList.remove('open');
+  _tipTarget = null;
+}
+
+function selectTipPreset(lcai, btn) {
+  document.getElementById('tip-custom').value = String(lcai);
+  document.querySelectorAll('.tip-preset-btn').forEach(b => b.classList.remove('selected'));
+  if (btn) btn.classList.add('selected');
+}
+
+async function openTipModal(songId) {
+  if (!wallet || !provider) {
+    showToast('Connect wallet to tip artists', true);
+    connectWallet();
+    return;
+  }
+  const rawS = allSongs.find(x => x.songId === songId);
+  if (!rawS) return;
+  const s = applyOverride(rawS);
+  if (s.uploader.toLowerCase() === wallet.toLowerCase()) {
+    showToast("You can't tip your own song", true);
+    return;
+  }
+  _tipTarget = { songId, uploader: s.uploader, title: s.title, artist: s.artist || '' };
+  const displayArtist = s.artist || (s.uploader.slice(0, 6) + '…' + s.uploader.slice(-4));
+  document.getElementById('tip-artist-line').textContent = 'Support ' + displayArtist;
+  document.getElementById('tip-song-line').textContent   = s.title;
+  document.getElementById('tip-custom').value            = '';
+  document.getElementById('tip-fee-status').textContent  = 'Loading LCAI price…';
+  document.getElementById('tip-preset-row').innerHTML    = '';
+  document.getElementById('tip-modal').classList.add('open');
+
+  try {
+    const feeData = await fetchLtFee();
+    window._ltTipFeeData = feeData;
+    const price = feeData.lcai_price;
+    if (!price || price <= 0) throw new Error('Price unavailable');
+    const presets = [
+      { usd: 1, label: '$1' },
+      { usd: 3, label: '$3' },
+      { usd: 5, label: '$5' },
+    ];
+    document.getElementById('tip-preset-row').innerHTML = presets.map(p => {
+      const lcai = Math.max(1, Math.ceil((p.usd / price) * 100) / 100);
+      return `<button type="button" class="tip-preset-btn" onclick="selectTipPreset(${lcai}, this)">
+        <div class="tip-preset-usd">${p.label}</div>
+        <div class="tip-preset-lcai">~${lcai.toFixed(2)} LCAI</div>
+      </button>`;
+    }).join('');
+    document.getElementById('tip-fee-status').textContent =
+      `1 LCAI ≈ $${price.toFixed(4)} USD · tips sent on Lightchain`;
+  } catch (e) {
+    document.getElementById('tip-fee-status').textContent = 'Could not load price — enter LCAI amount manually';
+    window._ltTipFeeData = null;
+  }
+}
+
+async function confirmTip() {
+  if (!_tipTarget) return;
+  const raw = document.getElementById('tip-custom').value.trim();
+  const lcai = parseFloat(raw);
+  if (!Number.isFinite(lcai) || lcai <= 0) {
+    showToast('Enter a valid tip amount in LCAI', true);
+    return;
+  }
+  if (lcai < 1) {
+    showToast('Minimum tip is 1 LCAI', true);
+    return;
+  }
+
+  const btn = document.getElementById('tip-send-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Preparing…';
+
+  try {
+    const feeData = window._ltTipFeeData || await fetchLtFee();
+    if (!feeData.fee_wallet) throw new Error('Platform wallet not configured');
+
+    const totalWei    = ethers.parseEther(lcai.toFixed(6));
+    const platformWei = totalWei * BigInt(TIP_PLATFORM_PCT) / 100n;
+    const artistWei   = totalWei - platformWei;
+    const artistLcai  = parseFloat(ethers.formatEther(artistWei));
+    const platformLcai = parseFloat(ethers.formatEther(platformWei));
+
+    const signer = await provider.getSigner();
+    closeTipModal();
+
+    showToast(`Sending ${artistLcai.toFixed(2)} LCAI to artist…`);
+    const tx1 = await signer.sendTransaction({
+      to:    _tipTarget.uploader,
+      value: artistWei,
+    });
+    await tx1.wait(1);
+
+    if (platformWei > 0n) {
+      showToast(`Sending ${platformLcai.toFixed(2)} LCAI platform fee…`);
+      const tx2 = await signer.sendTransaction({
+        to:    feeData.fee_wallet,
+        value: platformWei,
+      });
+      await tx2.wait(1);
+    }
+
+    showToast(`Tip sent! Artist received ~${artistLcai.toFixed(2)} LCAI 🎉`);
+    _tipTarget = null;
+  } catch (err) {
+    if (err?.code === 4001 || err?.message?.includes('rejected')) {
+      showToast('Tip cancelled', true);
+    } else {
+      showToast('Tip failed: ' + (err.reason || err.message || String(err)), true);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💰 Send Tip';
   }
 }
 
