@@ -180,6 +180,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .cp-bar-track{width:100%;max-width:600px;height:12px;background:var(--bg3);border-radius:9px;overflow:hidden}
 #cp-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:9px;width:0%;transition:width .3s}
 .cp-warning{background:rgba(232,82,82,0.12);border:1px solid rgba(232,82,82,.35);border-radius:10px;padding:14px 24px;font-size:20px;color:#ff9090;font-weight:600;max-width:600px}
+#cp-result{display:none;max-width:620px;font-size:17px;line-height:1.65;color:var(--muted);padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;word-break:break-word}
+#cp-result.success{color:var(--green);border-color:rgba(82,201,127,0.35);background:rgba(82,201,127,0.08)}
+#cp-result.error{color:#ff9090;border-color:rgba(232,82,82,0.35);background:rgba(232,82,82,0.08)}
+#cp-dismiss-btn{display:none;margin-top:8px}
 
 /* ── TOAST ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px 28px;font-size:20px;font-weight:600;color:var(--text);z-index:900;transition:transform .3s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4)}
@@ -562,8 +566,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div style="font-size:18px;color:var(--text);min-height:28px" id="cp-status">Preparing upload…</div>
   <div class="cp-bar-track"><div id="cp-bar"></div></div>
   <div style="font-size:18px;font-weight:700;color:var(--muted)" id="cp-pct">0%</div>
-  <div class="cp-warning">⚠️ Don't close or refresh this tab — upload in progress</div>
-  <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.65">The relay is handling everything on our server. You can open other tabs while it uploads — just don't close this one.</div>
+  <div id="cp-result"></div>
+  <div class="cp-warning" id="cp-warning">⚠️ Don't close or refresh this tab — upload in progress</div>
+  <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.65" id="cp-hint">The relay is handling everything on our server. You can open other tabs while it uploads — just don't close this one.</div>
+  <button class="btn btn-pink" id="cp-dismiss-btn" onclick="dismissUploadOverlay()">OK</button>
 </div>
 
 <!-- ── INFO / HOW IT WORKS MODAL ── -->
@@ -779,6 +785,7 @@ window.addEventListener('load', async () => {
   if (sessionStorage.getItem('lt_ak')) loadPermanentLists();
   readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
   await loadAllSongs();
+  checkPendingUploadRecovery();
   // Info modal available via the ℹ️ button — not auto-shown on load
 });
 
@@ -1679,6 +1686,71 @@ function handleCoverSelect(input) {
   reader.readAsDataURL(file);
 }
 
+function resetUploadOverlayUI() {
+  document.getElementById('cp-status').style.color = 'var(--text)';
+  document.getElementById('cp-result').style.display = 'none';
+  document.getElementById('cp-result').className = '';
+  document.getElementById('cp-result').textContent = '';
+  document.getElementById('cp-dismiss-btn').style.display = 'none';
+  document.getElementById('cp-warning').style.display = '';
+  document.getElementById('cp-hint').style.display = '';
+  document.getElementById('cp-bar').style.width = '0%';
+  document.getElementById('cp-pct').textContent = '0%';
+}
+
+function dismissUploadOverlay() {
+  document.getElementById('chunk-progress-overlay').style.display = 'none';
+  resetUploadOverlayUI();
+  sessionStorage.removeItem('lt_upload_job');
+}
+
+function showUploadOverlayResult(kind, message, extraHtml) {
+  const statusEl = document.getElementById('cp-status');
+  const resultEl = document.getElementById('cp-result');
+  statusEl.textContent = kind === 'success' ? '✅ Upload complete!' : '❌ Upload failed';
+  statusEl.style.color = kind === 'success' ? 'var(--green)' : 'var(--red)';
+  resultEl.className   = kind;
+  resultEl.innerHTML   = escHtml(message) + (extraHtml || '');
+  resultEl.style.display = 'block';
+  document.getElementById('cp-warning').style.display = 'none';
+  document.getElementById('cp-hint').style.display = 'none';
+  document.getElementById('cp-dismiss-btn').style.display = 'inline-flex';
+}
+
+function saveUploadJob(data) {
+  try { sessionStorage.setItem('lt_upload_job', JSON.stringify(data)); } catch (_) {}
+}
+
+async function checkPendingUploadRecovery() {
+  let raw;
+  try { raw = sessionStorage.getItem('lt_upload_job'); } catch (_) { return; }
+  if (!raw) return;
+  let saved;
+  try { saved = JSON.parse(raw); } catch (_) { sessionStorage.removeItem('lt_upload_job'); return; }
+  if (!saved.jobId || Date.now() - (saved.ts || 0) > 6 * 3600 * 1000) {
+    sessionStorage.removeItem('lt_upload_job');
+    return;
+  }
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/upload-progress/${saved.jobId}`);
+    const job = await res.json();
+    if (!res.ok || job.error === 'Job not found') {
+      showToast('Previous upload may have been interrupted — check My Songs or try again', true);
+      return;
+    }
+    if (job.status === 'complete' && job.songId != null) {
+      showToast(`Your upload finished! Song #${job.songId} is live.`);
+      sessionStorage.removeItem('lt_upload_job');
+      await loadAllSongs();
+      return;
+    }
+    if (job.status === 'error') {
+      showToast('Previous upload failed: ' + (job.error || 'unknown error'), true);
+      sessionStorage.removeItem('lt_upload_job');
+    }
+  } catch (_) {}
+}
+
 async function doUpload() {
   if (!wallet || !provider) { showToast('Connect wallet first', true); return; }
   if (!selectedFile)         { showToast('Select an audio file first', true); return; }
@@ -1710,11 +1782,12 @@ async function doUpload() {
 
   closeUpload();
   const overlay = document.getElementById('chunk-progress-overlay');
+  resetUploadOverlayUI();
   overlay.style.display = 'flex';
   document.getElementById('cp-filename').textContent = title;
   document.getElementById('cp-status').textContent   = 'Sign once to authorize upload…';
-  document.getElementById('cp-bar').style.width      = '0%';
-  document.getElementById('cp-pct').textContent      = '0%';
+
+  let paymentTxHash = null;
 
   try {
     // ── Step 1: Send upload fee ──────────────────────────────────────────────
@@ -1732,7 +1805,7 @@ async function doUpload() {
     });
     document.getElementById('cp-status').textContent = 'Waiting for fee confirmation…';
     await feeTx.wait(1);
-    const paymentTxHash = feeTx.hash;
+    paymentTxHash = feeTx.hash;
 
     // ── Step 2: Sign to prove wallet ownership ───────────────────────────────
     document.getElementById('cp-status').textContent = 'Sign to authorize upload…';
@@ -1764,16 +1837,23 @@ async function doUpload() {
       throw new Error(err.error || 'Relay server error');
     }
     const { jobId } = await startRes.json();
+    saveUploadJob({ jobId, title, paymentTxHash, wallet: wallet.toLowerCase(), ts: Date.now() });
 
     // Poll for progress
-    await new Promise((resolve, reject) => {
+    const songId = await new Promise((resolve, reject) => {
+      const started = Date.now();
       const poll = setInterval(async () => {
+        if (Date.now() - started > 3 * 3600 * 1000) {
+          clearInterval(poll);
+          reject(new Error('Upload timed out after 3 hours — check My Songs or contact support'));
+          return;
+        }
         try {
           const res = await fetch(`${RELAY_SERVER}/api/lighttunes/upload-progress/${jobId}`);
           const job = await res.json();
           if (!res.ok || job.error === 'Job not found') {
             clearInterval(poll);
-            reject(new Error('Server restarted — please upload again'));
+            reject(new Error('Relay restarted during upload — check My Songs. If missing, retry upload (fee may not have been used).'));
             return;
           }
           let pct = 0;
@@ -1794,12 +1874,23 @@ async function doUpload() {
       }, 3000);
     });
 
-    overlay.style.display = 'none';
+    document.getElementById('cp-bar').style.width = '100%';
+    document.getElementById('cp-pct').textContent = '100%';
+    const link = `${location.origin}${location.pathname}?song=${songId}`;
+    showUploadOverlayResult('success',
+      `Song #${songId} is on the blockchain.`,
+      `<br><br><a href="${escHtml(link)}" style="color:var(--pink);font-weight:700">Open your song</a> · check <strong>My Songs</strong> in the nav.`);
+    sessionStorage.removeItem('lt_upload_job');
     showToast('Song uploaded to the blockchain! 🎉');
     await loadAllSongs();
   } catch (err) {
-    overlay.style.display = 'none';
-    showToast('Upload failed: ' + (err.reason || err.message || String(err)), true);
+    const msg = err.reason || err.message || String(err) || 'Unknown error';
+    let extra = '';
+    if (paymentTxHash) {
+      extra = `<br><br>Fee payment tx:<br><code style="font-size:13px;word-break:break-all">${escHtml(paymentTxHash)}</code><br>If the relay never started, you can try uploading again without paying twice — contact support if stuck.`;
+    }
+    showUploadOverlayResult('error', msg, extra);
+    showToast('Upload failed: ' + msg, true);
   }
 }
 
