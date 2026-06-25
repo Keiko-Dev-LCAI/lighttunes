@@ -40,9 +40,19 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 #app-nav.nav-connected .btn-sm{padding:10px 16px;font-size:17px}
 #app-nav.nav-connected .nav-search{max-width:360px}
 #app-nav.nav-connected .nav-logo-text{font-size:28px}
-#android-install-strip{display:flex;align-items:center;justify-content:center;gap:10px;padding:9px 16px;background:rgba(0,212,255,0.1);border-bottom:1px solid rgba(0,212,255,0.22);color:#00d4ff;font-weight:700;font-size:16px;text-decoration:none;transition:background .15s}
-#android-install-strip:hover{background:rgba(0,212,255,0.18);color:#00d4ff}
-.android-strip-hint{font-weight:500;opacity:0.7;font-size:14px}
+#android-install-wrap{border-bottom:1px solid rgba(0,212,255,0.22);background:rgba(0,212,255,0.08)}
+#android-install-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 14px;padding:9px 16px}
+#android-install-strip{color:#00d4ff;font-weight:700;font-size:16px;text-decoration:none}
+#android-install-strip:hover{text-decoration:underline}
+.android-strip-hint{font-weight:500;opacity:0.7;font-size:14px;color:#00d4ff}
+.android-install-help-btn{background:transparent;border:1px solid rgba(255,184,75,0.45);color:var(--gold);font-size:14px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:inherit}
+.android-install-help-btn:hover{background:rgba(255,184,75,0.1)}
+#android-install-help{display:none;padding:0 16px 14px;font-size:15px;line-height:1.55;color:var(--muted);max-width:720px;margin:0 auto}
+#android-install-help.open{display:block}
+#android-install-help ol{margin:8px 0 0 18px;padding:0}
+#android-install-help li{margin-bottom:8px}
+#android-install-help strong{color:var(--text)}
+.android-install-alt{margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid var(--border);font-size:14px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:10px;border:none;font-size:20px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;white-space:nowrap}
 .btn-pink{background:var(--pink);color:#fff}
 .btn-pink:hover{opacity:.88}
@@ -316,7 +326,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   .nav-full{display:none}
   .nav-icon{display:inline}
   .android-strip-hint{display:none}
-  #android-install-strip{font-size:15px;padding:8px 12px}
+  #android-install-row{font-size:15px;padding:8px 12px}
   .empty-state h1{font-size:34px}
   .hero-icon{font-size:72px}
   .tagline{font-size:19px}
@@ -348,9 +358,23 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
 </nav>
 
-<a href="LightTunes.apk" download id="android-install-strip" title="Download LightTunes Android app">
-  📲 Download Android App <span class="android-strip-hint">— tap to install · allow unknown apps if asked</span>
-</a>
+<div id="android-install-wrap">
+  <div id="android-install-row">
+    <a href="LightTunes.apk" id="android-install-strip" title="Download LightTunes Android app">📲 Download Android App</a>
+    <span class="android-strip-hint">signed app · not on Play Store yet</span>
+    <button type="button" class="android-install-help-btn" onclick="toggleAndroidInstallHelp()">Phone says harmful?</button>
+  </div>
+  <div id="android-install-help">
+    <p><strong>Expected — not malware.</strong> Google Play Protect blocks most apps that are not from the Play Store. LightTunes is a signed wrapper around <strong>lighttunes.win</strong> (same site you are using now).</p>
+    <ol>
+      <li>Chrome may warn <strong>“file might be harmful”</strong> → tap <strong>Download anyway</strong>.</li>
+      <li>Open <strong>Downloads</strong> (or Files) → tap <strong>LightTunes.apk</strong>.</li>
+      <li>Play Protect may say <strong>Blocked</strong> → <strong>More details</strong> → <strong>Install anyway</strong>.</li>
+      <li>If asked, allow installs from <strong>Chrome</strong> or <strong>Files</strong> (Settings → Apps → Special access → Install unknown apps).</li>
+    </ol>
+    <p class="android-install-alt"><strong>Skip the APK:</strong> bookmark <a href="https://lighttunes.win" style="color:#00d4ff">lighttunes.win</a> in your wallet browser — full app, no install needed.</p>
+  </div>
+</div>
 
 <!-- ── UPLOAD STATUS BAR (browse while uploading) ── -->
 <div id="upload-status-bar" onclick="expandUploadOverlay()" title="Click for upload details">
@@ -691,11 +715,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <div class="info-section">
       <div class="info-section-title">📲 Android App</div>
-      <p>Install LightTunes on your phone — same site, opens like a native app. No Play Store needed.</p>
+      <p>Install LightTunes on your phone — it opens <strong>lighttunes.win</strong> like a native app. We distribute the APK from this site (not the Play Store), so Android may show a safety warning. That is normal for sideloaded apps.</p>
       <p style="margin-top:14px;text-align:center">
-        <a href="LightTunes.apk" download class="btn btn-pink" style="display:inline-block;text-decoration:none;font-size:20px;padding:14px 28px">📲 Download Android App</a>
+        <a href="LightTunes.apk" class="btn btn-pink" style="display:inline-block;text-decoration:none;font-size:20px;padding:14px 28px">📲 Download Android App</a>
       </p>
-      <p style="margin-top:12px;font-size:17px;color:var(--muted);text-align:center">Download → open file → Install. Allow unknown apps if your phone asks.</p>
+      <p style="margin-top:14px"><strong>If blocked:</strong> Download anyway → open APK → More details → Install anyway. Or skip install and use <strong>lighttunes.win</strong> in your browser.</p>
     </div>
 
     <div class="info-section">
@@ -888,6 +912,10 @@ function openInfo() {
 function closeInfo() {
   document.getElementById('info-modal').classList.remove('open');
   localStorage.setItem('lt_welcomed', '1');
+}
+
+function toggleAndroidInstallHelp() {
+  document.getElementById('android-install-help').classList.toggle('open');
 }
 
 // ════════════════════════════════════════════════════════
