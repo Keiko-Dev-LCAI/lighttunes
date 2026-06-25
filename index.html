@@ -36,10 +36,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .nav-search input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:28px;padding:15px 24px 15px 54px;font-size:21px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s}
 .nav-search input:focus{border-color:var(--pink)}
 .nav-search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--muted);pointer-events:none}
-.nav-android-dl{flex-shrink:0;background:#00d4ff;color:#000;border:2px solid #00d4ff;font-weight:800}
-.nav-android-dl:hover{opacity:.9;color:#000}
-.nav-android-short{display:none}
-.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#app-nav.nav-connected .btn-sm{padding:10px 16px;font-size:17px}
+#app-nav.nav-connected .nav-search{max-width:360px}
+#app-nav.nav-connected .nav-logo-text{font-size:28px}
+#android-install-strip{display:flex;align-items:center;justify-content:center;gap:10px;padding:9px 16px;background:rgba(0,212,255,0.1);border-bottom:1px solid rgba(0,212,255,0.22);color:#00d4ff;font-weight:700;font-size:16px;text-decoration:none;transition:background .15s}
+#android-install-strip:hover{background:rgba(0,212,255,0.18);color:#00d4ff}
+.android-strip-hint{font-weight:500;opacity:0.7;font-size:14px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:10px;border:none;font-size:20px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;white-space:nowrap}
 .btn-pink{background:var(--pink);color:#fff}
 .btn-pink:hover{opacity:.88}
@@ -312,8 +315,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   .info-btn-short{display:inline !important}
   .nav-full{display:none}
   .nav-icon{display:inline}
-  .nav-android-full{display:none}
-  .nav-android-short{display:inline}
+  .android-strip-hint{display:none}
+  #android-install-strip{font-size:15px;padding:8px 12px}
   .empty-state h1{font-size:34px}
   .hero-icon{font-size:72px}
   .tagline{font-size:19px}
@@ -333,7 +336,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <span class="nav-search-icon">🔍</span>
     <input id="search-input" type="text" placeholder="Search songs, artists…" oninput="applyFilters()" autocomplete="off">
   </div>
-  <a href="LightTunes.apk" download class="btn btn-sm nav-android-dl" id="nav-android-dl" title="Download Android app"><span class="nav-android-full">📲 Android</span><span class="nav-android-short">📲</span></a>
   <div class="nav-right">
     <button class="btn btn-outline btn-sm mobile-search-btn" onclick="toggleMobileSearch()" style="display:none">🔍</button>
     <button class="btn btn-outline btn-sm" onclick="openInfo()"><span class="info-btn-full">ℹ️ How It Works</span><span class="info-btn-short" style="display:none">ℹ️</span></button>
@@ -345,6 +347,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <button class="btn btn-outline btn-sm" id="btn-disconnect" onclick="disconnectWallet()" style="display:none;font-size:12px">Disconnect</button>
   </div>
 </nav>
+
+<a href="LightTunes.apk" download id="android-install-strip" title="Download LightTunes Android app">
+  📲 Download Android App <span class="android-strip-hint">— tap to install · allow unknown apps if asked</span>
+</a>
 
 <!-- ── UPLOAD STATUS BAR (browse while uploading) ── -->
 <div id="upload-status-bar" onclick="expandUploadOverlay()" title="Click for upload details">
@@ -1687,6 +1693,7 @@ function disconnectWallet() {
 }
 
 function updateWalletUI(connected) {
+  document.getElementById('app-nav').classList.toggle('nav-connected', connected);
   document.getElementById('btn-connect').style.display    = connected ? 'none' : '';
   document.getElementById('btn-upload').style.display     = connected ? '' : 'none';
   document.getElementById('btn-channel').style.display    = connected ? '' : 'none';
@@ -2741,7 +2748,7 @@ async function generateTunesDescription() {
 
 <script>
 if (window.matchMedia('(display-mode: standalone)').matches) {
-  const el = document.getElementById('nav-android-dl');
+  const el = document.getElementById('android-install-strip');
   if (el) el.style.display = 'none';
 }
 </script>
