@@ -184,6 +184,29 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 #cp-result.success{color:var(--green);border-color:rgba(82,201,127,0.35);background:rgba(82,201,127,0.08)}
 #cp-result.error{color:#ff9090;border-color:rgba(232,82,82,0.35);background:rgba(232,82,82,0.08)}
 #cp-dismiss-btn{display:none;margin-top:8px}
+.cp-steps{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:640px}
+.cp-step{flex:1;min-width:120px;padding:10px 12px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);font-size:14px;font-weight:700;color:var(--muted);line-height:1.35}
+.cp-step.active{border-color:rgba(232,75,138,0.55);color:var(--pink);background:rgba(232,75,138,0.1)}
+.cp-step.done{border-color:rgba(82,201,127,0.45);color:var(--green);background:rgba(82,201,127,0.08)}
+.cp-step-num{display:block;font-size:11px;opacity:0.75;margin-bottom:2px}
+#cp-minimize-btn{display:none}
+#cp-success-actions{display:none;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+#upload-status-bar{position:fixed;left:16px;right:16px;bottom:16px;z-index:850;display:none;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 18px;box-shadow:0 8px 40px rgba(0,0,0,.55);cursor:pointer}
+#upload-status-bar.usb-success{border-color:rgba(82,201,127,0.5);background:rgba(82,201,127,0.1)}
+#upload-status-bar.usb-error{border-color:rgba(232,82,82,0.5);background:rgba(232,82,82,0.1)}
+.usb-inner{display:flex;align-items:center;gap:14px}
+.usb-icon{font-size:28px;flex-shrink:0}
+.usb-text{flex:1;min-width:0}
+.usb-title{font-size:16px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.usb-status{font-size:13px;color:var(--muted);margin-top:2px}
+.usb-bar-track{width:120px;height:8px;background:var(--bg3);border-radius:6px;overflow:hidden;flex-shrink:0}
+#usb-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));width:0%;transition:width .3s}
+.usb-pct{font-size:14px;font-weight:800;color:var(--muted);min-width:42px;text-align:right}
+#usb-expand-btn{flex-shrink:0}
+.song-card.upload-highlight{outline:3px solid var(--pink);box-shadow:0 0 24px rgba(232,75,138,0.45);animation:uploadPulse 1.5s ease-in-out 3}
+@keyframes uploadPulse{0%,100%{outline-color:var(--pink)}50%{outline-color:var(--purple)}}
+#btn-channel.upload-pulse{animation:navPulse 1.2s ease-in-out 4;border-color:var(--pink)!important;color:var(--pink)!important}
+@keyframes navPulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 16px rgba(232,75,138,0.6)}}
 
 /* ── TOAST ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px 28px;font-size:20px;font-weight:600;color:var(--text);z-index:900;transition:transform .3s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4)}
@@ -259,7 +282,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   .upload-title{font-size:20px}
   .form-input,.form-textarea{font-size:16px;padding:12px 14px}
   #chunk-progress-overlay{padding:20px 16px}
-  #toast{width:90%;white-space:normal;text-align:center;font-size:16px}
+  .cp-step{min-width:72px;font-size:12px;padding:8px 6px}
+  #upload-status-bar{left:8px;right:8px;bottom:8px;padding:12px}
+  .usb-bar-track{width:72px}
+  #toast{width:90%;white-space:normal;text-align:center;font-size:16px;bottom:88px}
   .vis-opt{min-width:140px}
   #info-modal{padding:0;overflow-x:hidden;width:100vw}
   #info-inner{padding:18px 14px;border-radius:0;min-height:100vh;margin:0;width:100vw;max-width:100vw;box-sizing:border-box}
@@ -309,6 +335,20 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <button class="btn btn-outline btn-sm" id="btn-disconnect" onclick="disconnectWallet()" style="display:none;font-size:12px">Disconnect</button>
   </div>
 </nav>
+
+<!-- ── UPLOAD STATUS BAR (browse while uploading) ── -->
+<div id="upload-status-bar" onclick="expandUploadOverlay()" title="Click for upload details">
+  <div class="usb-inner">
+    <span class="usb-icon" id="usb-icon">⬆️</span>
+    <div class="usb-text">
+      <div class="usb-title" id="usb-title">Uploading…</div>
+      <div class="usb-status" id="usb-status">Starting…</div>
+    </div>
+    <div class="usb-bar-track"><div id="usb-bar"></div></div>
+    <span class="usb-pct" id="usb-pct">0%</span>
+    <button class="btn btn-outline btn-sm" id="usb-expand-btn" onclick="event.stopPropagation();expandUploadOverlay()">Details</button>
+  </div>
+</div>
 
 <!-- ── MOBILE WALLET BANNER ── -->
 <div id="mobile-wallet-banner">
@@ -561,14 +601,26 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 <!-- ── UPLOAD PROGRESS OVERLAY ── -->
 <div id="chunk-progress-overlay">
-  <div style="font-size:52px">🎵⛓️</div>
+  <div style="font-size:52px" id="cp-hero-icon">🎵⛓️</div>
   <div style="font-size:22px;font-weight:800;color:var(--pink);max-width:600px;word-break:break-word" id="cp-filename"></div>
+  <div class="cp-steps" id="cp-steps">
+    <div class="cp-step" data-step="1"><span class="cp-step-num">Step 1</span>Pay fee</div>
+    <div class="cp-step" data-step="2"><span class="cp-step-num">Step 2</span>Sign</div>
+    <div class="cp-step" data-step="3"><span class="cp-step-num">Step 3</span>Send file</div>
+    <div class="cp-step" data-step="4"><span class="cp-step-num">Step 4</span>On chain</div>
+  </div>
   <div style="font-size:18px;color:var(--text);min-height:28px" id="cp-status">Preparing upload…</div>
   <div class="cp-bar-track"><div id="cp-bar"></div></div>
   <div style="font-size:18px;font-weight:700;color:var(--muted)" id="cp-pct">0%</div>
   <div id="cp-result"></div>
-  <div class="cp-warning" id="cp-warning">⚠️ Don't close or refresh this tab — upload in progress</div>
-  <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.65" id="cp-hint">The relay is handling everything on our server. You can open other tabs while it uploads — just don't close this one.</div>
+  <div class="cp-warning" id="cp-warning">⚠️ Keep this tab open — your upload is in progress</div>
+  <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.65" id="cp-hint">Fee paid and file accepted? You can browse LightTunes while chunks upload — watch the bar at the bottom of the screen.</div>
+  <div id="cp-success-actions">
+    <button class="btn btn-pink" onclick="openUploadedSong()">▶ Play my song</button>
+    <button class="btn btn-outline" onclick="viewUploadedInMySongs()">🎤 My Songs</button>
+    <button class="btn btn-outline" onclick="dismissUploadOverlay()">Done</button>
+  </div>
+  <button class="btn btn-outline" id="cp-minimize-btn" onclick="minimizeUploadOverlay()">Browse while uploading</button>
   <button class="btn btn-pink" id="cp-dismiss-btn" onclick="dismissUploadOverlay()">OK</button>
 </div>
 
@@ -1045,7 +1097,7 @@ function songCardHtml(rawS, pl) {
   const tagsHtml = tags.length ? `<div class="song-tags">${tags.map(t => `<span class="song-tag" onclick="event.stopPropagation();filterByTag('${t.replace(/'/g,"\\'")}')"><span style="opacity:0.6">#</span>${escHtml(t)}</span>`).join('')}</div>` : '';
   const privLabel = !s.isPublic ? ' <span class="private-label">🔒 Private</span>' : '';
 
-  return `<div class="song-card"${cardStyle} onclick="playSong(${s.songId})">
+  return `<div class="song-card" id="song-card-${s.songId}"${cardStyle} onclick="playSong(${s.songId})">
     <div class="song-art">${artHtml}${explicitTag}</div>
     <div class="song-card-body">
       <span class="song-genre-badge">${genreEmoji} ${escHtml(s.genre || 'Other')}</span>
@@ -1686,20 +1738,113 @@ function handleCoverSelect(input) {
   reader.readAsDataURL(file);
 }
 
+let _uploadPollTimer   = null;
+let _uploadActive      = false;
+let _uploadJobId       = null;
+let _uploadTitle       = '';
+let _uploadSongId      = null;
+
+function setUploadStep(step) {
+  document.querySelectorAll('.cp-step').forEach(el => {
+    const n = Number(el.dataset.step);
+    el.classList.remove('active', 'done');
+    if (n < step) el.classList.add('done');
+    else if (n === step) el.classList.add('active');
+  });
+}
+
+function updateUploadProgressUI(pct, statusText) {
+  const pctStr = pct + '%';
+  document.getElementById('cp-bar').style.width = pctStr;
+  document.getElementById('cp-pct').textContent = pctStr;
+  document.getElementById('usb-bar').style.width = pctStr;
+  document.getElementById('usb-pct').textContent = pctStr;
+  if (statusText) {
+    document.getElementById('cp-status').textContent = statusText;
+    document.getElementById('usb-status').textContent = statusText;
+  }
+}
+
+function showUploadStatusBar(title, statusText, pct) {
+  const bar = document.getElementById('upload-status-bar');
+  bar.classList.remove('usb-success', 'usb-error');
+  bar.style.display = 'block';
+  document.getElementById('usb-title').textContent = title || 'Uploading…';
+  document.getElementById('usb-icon').textContent = '⬆️';
+  updateUploadProgressUI(pct || 0, statusText || 'Starting…');
+}
+
+function hideUploadStatusBar() {
+  document.getElementById('upload-status-bar').style.display = 'none';
+  document.getElementById('upload-status-bar').classList.remove('usb-success', 'usb-error');
+}
+
 function resetUploadOverlayUI() {
+  document.getElementById('cp-hero-icon').textContent = '🎵⛓️';
   document.getElementById('cp-status').style.color = 'var(--text)';
   document.getElementById('cp-result').style.display = 'none';
   document.getElementById('cp-result').className = '';
   document.getElementById('cp-result').textContent = '';
   document.getElementById('cp-dismiss-btn').style.display = 'none';
+  document.getElementById('cp-success-actions').style.display = 'none';
+  document.getElementById('cp-minimize-btn').style.display = 'none';
   document.getElementById('cp-warning').style.display = '';
   document.getElementById('cp-hint').style.display = '';
-  document.getElementById('cp-bar').style.width = '0%';
-  document.getElementById('cp-pct').textContent = '0%';
+  document.querySelectorAll('.cp-step').forEach(el => el.classList.remove('active', 'done'));
+  updateUploadProgressUI(0, '');
 }
 
-function dismissUploadOverlay() {
+function stopUploadPolling() {
+  if (_uploadPollTimer) { clearInterval(_uploadPollTimer); _uploadPollTimer = null; }
+}
+
+function minimizeUploadOverlay() {
   document.getElementById('chunk-progress-overlay').style.display = 'none';
+  showToast('Upload continues in the background — bar at bottom of screen');
+}
+
+function expandUploadOverlay() {
+  if (!_uploadActive && !_uploadSongId) return;
+  document.getElementById('chunk-progress-overlay').style.display = 'flex';
+}
+
+function highlightUploadedSong(songId) {
+  const card = document.getElementById('song-card-' + songId);
+  if (card) {
+    card.classList.add('upload-highlight');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => card.classList.remove('upload-highlight'), 8000);
+  }
+  const btn = document.getElementById('btn-channel');
+  if (btn) {
+    btn.classList.add('upload-pulse');
+    setTimeout(() => btn.classList.remove('upload-pulse'), 6000);
+  }
+}
+
+function openUploadedSong() {
+  if (_uploadSongId == null) return;
+  dismissUploadOverlay(false);
+  playSong(_uploadSongId);
+}
+
+function viewUploadedInMySongs() {
+  if (_uploadSongId == null) { showMyChannel(); return; }
+  dismissUploadOverlay(false);
+  showMyChannel();
+  setTimeout(() => highlightUploadedSong(_uploadSongId), 300);
+}
+
+function dismissUploadOverlay(clearJob) {
+  if (clearJob !== false && _uploadActive) {
+    showToast('Upload still running — use the bottom bar to check progress');
+    return;
+  }
+  document.getElementById('chunk-progress-overlay').style.display = 'none';
+  stopUploadPolling();
+  _uploadActive = false;
+  _uploadJobId  = null;
+  hideUploadStatusBar();
   resetUploadOverlayUI();
   sessionStorage.removeItem('lt_upload_job');
 }
@@ -1707,18 +1852,86 @@ function dismissUploadOverlay() {
 function showUploadOverlayResult(kind, message, extraHtml) {
   const statusEl = document.getElementById('cp-status');
   const resultEl = document.getElementById('cp-result');
-  statusEl.textContent = kind === 'success' ? '✅ Upload complete!' : '❌ Upload failed';
-  statusEl.style.color = kind === 'success' ? 'var(--green)' : 'var(--red)';
+  const isSuccess = kind === 'success';
+  statusEl.textContent = isSuccess ? '✅ Your song is live!' : '❌ Upload failed';
+  statusEl.style.color = isSuccess ? 'var(--green)' : 'var(--red)';
+  document.getElementById('cp-hero-icon').textContent = isSuccess ? '🎉' : '⚠️';
   resultEl.className   = kind;
   resultEl.innerHTML   = escHtml(message) + (extraHtml || '');
   resultEl.style.display = 'block';
   document.getElementById('cp-warning').style.display = 'none';
   document.getElementById('cp-hint').style.display = 'none';
-  document.getElementById('cp-dismiss-btn').style.display = 'inline-flex';
+  document.getElementById('cp-minimize-btn').style.display = 'none';
+  document.getElementById('cp-dismiss-btn').style.display = isSuccess ? 'none' : 'inline-flex';
+  document.getElementById('cp-success-actions').style.display = isSuccess ? 'flex' : 'none';
+  document.getElementById('chunk-progress-overlay').style.display = 'flex';
+
+  const bar = document.getElementById('upload-status-bar');
+  bar.style.display = 'block';
+  bar.classList.toggle('usb-success', isSuccess);
+  bar.classList.toggle('usb-error', !isSuccess);
+  document.getElementById('usb-icon').textContent = isSuccess ? '✅' : '❌';
+  document.getElementById('usb-title').textContent = isSuccess
+    ? (_uploadTitle ? `"${_uploadTitle}" is live` : 'Upload complete')
+    : 'Upload failed';
+  document.getElementById('usb-status').textContent = isSuccess
+    ? 'Tap Details or Play my song below'
+    : message;
+  updateUploadProgressUI(isSuccess ? 100 : 0, '');
 }
 
 function saveUploadJob(data) {
   try { sessionStorage.setItem('lt_upload_job', JSON.stringify(data)); } catch (_) {}
+}
+
+function pollUploadJob(jobId, title, onComplete, onError) {
+  stopUploadPolling();
+  _uploadJobId  = jobId;
+  _uploadTitle  = title;
+  _uploadActive = true;
+  const started = Date.now();
+  setUploadStep(4);
+  document.getElementById('cp-minimize-btn').style.display = 'inline-flex';
+  showUploadStatusBar(title, 'Registering on blockchain…', 3);
+
+  _uploadPollTimer = setInterval(async () => {
+    if (Date.now() - started > 3 * 3600 * 1000) {
+      stopUploadPolling();
+      _uploadActive = false;
+      onError(new Error('Upload timed out after 3 hours — check My Songs or contact support'));
+      return;
+    }
+    try {
+      const res = await fetch(`${RELAY_SERVER}/api/lighttunes/upload-progress/${jobId}`);
+      const job = await res.json();
+      if (!res.ok || job.error === 'Job not found') {
+        stopUploadPolling();
+        _uploadActive = false;
+        onError(new Error('Relay restarted during upload — check My Songs. If missing, retry upload (fee may not have been used).'));
+        return;
+      }
+      let pct = 0;
+      let status = 'Working…';
+      if (job.status === 'initializing') {
+        pct = 3;
+        status = 'Registering song on chain…';
+      } else if (job.status === 'uploading') {
+        pct = job.total > 0 ? Math.min(99, Math.round((job.progress / job.total) * 100)) : 0;
+        status = `Uploading chunk ${job.progress} of ${job.total}…`;
+      } else if (job.status === 'complete') {
+        stopUploadPolling();
+        _uploadActive = false;
+        onComplete(job.songId);
+        return;
+      } else if (job.status === 'error') {
+        stopUploadPolling();
+        _uploadActive = false;
+        onError(new Error(job.error || 'Upload failed'));
+        return;
+      }
+      updateUploadProgressUI(pct, status);
+    } catch (_) { /* network hiccup — keep polling */ }
+  }, 3000);
 }
 
 async function checkPendingUploadRecovery() {
@@ -1731,24 +1944,55 @@ async function checkPendingUploadRecovery() {
     sessionStorage.removeItem('lt_upload_job');
     return;
   }
+  _uploadTitle = saved.title || 'Your song';
+  document.getElementById('cp-filename').textContent = _uploadTitle;
+  resetUploadOverlayUI();
+  setUploadStep(4);
+  document.getElementById('cp-status').textContent = 'Resuming your upload…';
+  document.getElementById('chunk-progress-overlay').style.display = 'flex';
+  showUploadStatusBar(_uploadTitle, 'Resuming upload…', 0);
+
   try {
     const res = await fetch(`${RELAY_SERVER}/api/lighttunes/upload-progress/${saved.jobId}`);
     const job = await res.json();
     if (!res.ok || job.error === 'Job not found') {
-      showToast('Previous upload may have been interrupted — check My Songs or try again', true);
+      showUploadOverlayResult('error', 'Previous upload was interrupted — check My Songs or try again.', '');
+      sessionStorage.removeItem('lt_upload_job');
       return;
     }
     if (job.status === 'complete' && job.songId != null) {
-      showToast(`Your upload finished! Song #${job.songId} is live.`);
-      sessionStorage.removeItem('lt_upload_job');
+      _uploadSongId = job.songId;
       await loadAllSongs();
+      updateUploadProgressUI(100, 'Complete');
+      showUploadOverlayResult('success', `Song #${job.songId} is on the blockchain.`, '');
+      sessionStorage.removeItem('lt_upload_job');
+      highlightUploadedSong(job.songId);
       return;
     }
     if (job.status === 'error') {
-      showToast('Previous upload failed: ' + (job.error || 'unknown error'), true);
+      showUploadOverlayResult('error', job.error || 'unknown error', '');
       sessionStorage.removeItem('lt_upload_job');
+      return;
     }
-  } catch (_) {}
+    pollUploadJob(saved.jobId, _uploadTitle,
+      async (songId) => {
+        _uploadSongId = songId;
+        updateUploadProgressUI(100, 'Complete');
+        showUploadOverlayResult('success', `Song #${songId} is on the blockchain.`, '');
+        sessionStorage.removeItem('lt_upload_job');
+        showToast('Your upload finished! 🎉');
+        await loadAllSongs();
+        highlightUploadedSong(songId);
+      },
+      (err) => {
+        showUploadOverlayResult('error', err.message || String(err), saved.paymentTxHash
+          ? `<br><br>Fee payment tx:<br><code style="font-size:13px;word-break:break-all">${escHtml(saved.paymentTxHash)}</code>`
+          : '');
+        showToast('Upload failed: ' + (err.message || err), true);
+      });
+  } catch (_) {
+    showToast('Could not resume upload — check My Songs', true);
+  }
 }
 
 async function doUpload() {
@@ -1781,21 +2025,24 @@ async function doUpload() {
   let feeData         = window._ltFeeData;
 
   closeUpload();
+  _uploadTitle  = title;
+  _uploadSongId = null;
   const overlay = document.getElementById('chunk-progress-overlay');
   resetUploadOverlayUI();
   overlay.style.display = 'flex';
   document.getElementById('cp-filename').textContent = title;
-  document.getElementById('cp-status').textContent   = 'Sign once to authorize upload…';
+  setUploadStep(1);
+  updateUploadProgressUI(0, 'Approve the upload fee in your wallet…');
 
   let paymentTxHash = null;
 
   try {
     // ── Step 1: Send upload fee ──────────────────────────────────────────────
     if (!feeData || !feeData.fee_wallet || !feeData.fee_lcai) {
-      document.getElementById('cp-status').textContent = 'Loading upload fee…';
+      updateUploadProgressUI(0, 'Loading upload fee…');
       feeData = await fetchLtFee();
     }
-    document.getElementById('cp-status').textContent = `Sending upload fee (~${feeData.fee_lcai.toFixed(2)} LCAI)…`;
+    updateUploadProgressUI(2, `Approve ~${feeData.fee_lcai.toFixed(2)} LCAI fee in your wallet…`);
 
     const signerObj = await provider.getSigner();
     const feeWei    = ethers.parseEther(String(Math.ceil(feeData.fee_lcai * 1.01 * 1000) / 1000)); // 1% buffer
@@ -1803,16 +2050,18 @@ async function doUpload() {
       to:    feeData.fee_wallet,
       value: feeWei,
     });
-    document.getElementById('cp-status').textContent = 'Waiting for fee confirmation…';
+    updateUploadProgressUI(5, 'Waiting for fee confirmation on chain…');
     await feeTx.wait(1);
     paymentTxHash = feeTx.hash;
+    setUploadStep(2);
 
     // ── Step 2: Sign to prove wallet ownership ───────────────────────────────
-    document.getElementById('cp-status').textContent = 'Sign to authorize upload…';
+    updateUploadProgressUI(8, 'Sign the message in your wallet to authorize upload…');
     const message   = `LightTunes upload: ${wallet.toLowerCase()}`;
     const signature = await signerObj.signMessage(message);
+    setUploadStep(3);
 
-    document.getElementById('cp-status').textContent = 'Uploading to relay server…';
+    updateUploadProgressUI(12, 'Sending your file to the relay server…');
 
     const formData = new FormData();
     formData.append('audio',     fileToUpload);
@@ -1838,52 +2087,25 @@ async function doUpload() {
     }
     const { jobId } = await startRes.json();
     saveUploadJob({ jobId, title, paymentTxHash, wallet: wallet.toLowerCase(), ts: Date.now() });
+    updateUploadProgressUI(15, 'File accepted — uploading chunks to the blockchain…');
 
-    // Poll for progress
     const songId = await new Promise((resolve, reject) => {
-      const started = Date.now();
-      const poll = setInterval(async () => {
-        if (Date.now() - started > 3 * 3600 * 1000) {
-          clearInterval(poll);
-          reject(new Error('Upload timed out after 3 hours — check My Songs or contact support'));
-          return;
-        }
-        try {
-          const res = await fetch(`${RELAY_SERVER}/api/lighttunes/upload-progress/${jobId}`);
-          const job = await res.json();
-          if (!res.ok || job.error === 'Job not found') {
-            clearInterval(poll);
-            reject(new Error('Relay restarted during upload — check My Songs. If missing, retry upload (fee may not have been used).'));
-            return;
-          }
-          let pct = 0;
-          if (job.status === 'initializing') pct = 3;
-          else if (job.total > 0) pct = Math.min(99, Math.round((job.progress / job.total) * 100));
-          document.getElementById('cp-bar').style.width = pct + '%';
-          document.getElementById('cp-pct').textContent = pct + '%';
-          if (job.status === 'initializing') {
-            document.getElementById('cp-status').textContent = 'Registering song on chain…';
-          } else if (job.status === 'uploading') {
-            document.getElementById('cp-status').textContent = `Uploading chunk ${job.progress} of ${job.total}…`;
-          } else if (job.status === 'complete') {
-            clearInterval(poll); resolve(job.songId);
-          } else if (job.status === 'error') {
-            clearInterval(poll); reject(new Error(job.error || 'Upload failed'));
-          }
-        } catch(e) { /* network hiccup — keep polling */ }
-      }, 3000);
+      pollUploadJob(jobId, title, resolve, reject);
     });
 
-    document.getElementById('cp-bar').style.width = '100%';
-    document.getElementById('cp-pct').textContent = '100%';
+    _uploadSongId = songId;
+    updateUploadProgressUI(100, 'Complete — your song is live!');
     const link = `${location.origin}${location.pathname}?song=${songId}`;
     showUploadOverlayResult('success',
-      `Song #${songId} is on the blockchain.`,
-      `<br><br><a href="${escHtml(link)}" style="color:var(--pink);font-weight:700">Open your song</a> · check <strong>My Songs</strong> in the nav.`);
+      `"${title}" is on the blockchain as Song #${songId}.`,
+      `<br><br>It will appear in <strong>All Songs</strong> and <strong>My Songs</strong>.`);
     sessionStorage.removeItem('lt_upload_job');
-    showToast('Song uploaded to the blockchain! 🎉');
+    showToast('🎉 Upload complete — your song is live!');
     await loadAllSongs();
+    highlightUploadedSong(songId);
   } catch (err) {
+    _uploadActive = false;
+    stopUploadPolling();
     const msg = err.reason || err.message || String(err) || 'Unknown error';
     let extra = '';
     if (paymentTxHash) {
