@@ -100,6 +100,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .song-artist{font-size:19px;color:var(--purple);font-weight:600;margin-bottom:6px;cursor:pointer;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .song-artist:hover{color:var(--pink)}
 .song-meta{font-size:17px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.song-view-count{color:var(--muted);font-size:15px;font-weight:600}
 .song-avatar{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:10px;font-weight:800;color:white;flex-shrink:0;font-family:monospace}
 .song-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .song-tag{display:inline-block;font-size:15px;font-weight:600;padding:4px 12px;border-radius:20px;background:rgba(75,158,232,0.1);color:var(--blue);cursor:pointer;border:1px solid rgba(75,158,232,0.2);transition:all .15s;white-space:nowrap}
@@ -863,6 +864,7 @@ let _showPlaylist      = false; // true when in playlist view
 let _playlistPlayback  = false; // true only when user pressed play from ♥ Playlist
 let _currentSongId     = null; // song currently open in player
 let _channelFilter  = null; // wallet address when viewing a channel (keeps search bar clean)
+let songViews       = {};   // songId (number) -> finished-play count (public songs only)
 
 // Personal playlist stored in localStorage per wallet
 function getPlaylist() {
@@ -919,6 +921,127 @@ function toggleAndroidInstallHelp() {
 }
 
 // ════════════════════════════════════════════════════════
+//  VIEW COUNTS (finished public plays — relay-backed, free)
+// ════════════════════════════════════════════════════════
+function formatViewCount(n, opts = {}) {
+  if (!n || n < 1) return '';
+  let num;
+  if (n < 1000) num = n.toLocaleString();
+  else if (n < 1e6) num = (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  else if (n < 1e9) num = (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  else num = (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (opts.total) return num + ' total view' + (n === 1 ? '' : 's');
+  return num + ' view' + (n === 1 ? '' : 's');
+}
+
+function getViewCount(songId) {
+  return songViews[songId] || 0;
+}
+
+function getChannelViewTotal(addr) {
+  return allSongs.reduce((sum, rawS) => {
+    const s = applyOverride(rawS);
+    if (!s.isPublic || isSongHidden(s)) return sum;
+    if (s.uploader.toLowerCase() !== addr.toLowerCase()) return sum;
+    return sum + getViewCount(s.songId);
+  }, 0);
+}
+
+function channelCountLabel(addr, songCount) {
+  let label = `${songCount} song${songCount !== 1 ? 's' : ''}`;
+  const totalViews = getChannelViewTotal(addr);
+  if (totalViews > 0) label += ` · ${formatViewCount(totalViews, { total: true })}`;
+  return label;
+}
+
+async function loadSongViews() {
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/views`);
+    if (!res.ok) return;
+    const data = await res.json();
+    songViews = {};
+    for (const [k, v] of Object.entries(data.views || {})) {
+      const id = parseInt(String(k).replace(/^v1-/, ''), 10);
+      if (!isNaN(id)) songViews[id] = parseInt(v, 10) || 0;
+    }
+  } catch (e) {
+    console.warn('View counts unavailable:', e);
+  }
+}
+
+async function recordSongView(songId) {
+  if (songId == null) return;
+  const rawS = allSongs.find(x => x.songId === songId);
+  if (!rawS) return;
+  const s = applyOverride(rawS);
+  if (!s.isPublic) return;
+
+  const dedupeKey = 'lt_view_' + songId;
+  const last = parseInt(localStorage.getItem(dedupeKey) || '0', 10);
+  if (Date.now() - last < 86400000) return;
+
+  try {
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ songId }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    songViews[songId] = data.views;
+    localStorage.setItem(dedupeKey, String(Date.now()));
+    refreshViewDisplays(songId);
+  } catch (e) {
+    console.warn('View record failed:', e);
+  }
+}
+
+function refreshViewDisplays(songId) {
+  if (_currentSongId === songId) refreshPlayerViewCount();
+  const card = document.getElementById('song-card-' + songId);
+  if (card) {
+    const meta = card.querySelector('.song-meta');
+    const vc = getViewCount(songId);
+    if (!meta) return;
+    let span = meta.querySelector('.song-view-count');
+    if (vc > 0) {
+      const txt = formatViewCount(vc);
+      if (span) span.textContent = txt;
+      else meta.insertAdjacentHTML('beforeend', `<span class="song-view-count">${txt}</span>`);
+    } else if (span) span.remove();
+  }
+  if (_channelFilter) {
+    const countEl = document.getElementById('song-count');
+    if (countEl && countEl.textContent) {
+      const m = countEl.textContent.match(/^(\d+)\s+song/);
+      if (m) countEl.textContent = channelCountLabel(_channelFilter, parseInt(m[1], 10));
+    }
+  }
+}
+
+function refreshPlayerViewCount() {
+  const meta = document.getElementById('player-meta');
+  if (!meta || _currentSongId == null) return;
+  const rawS = allSongs.find(x => x.songId === _currentSongId);
+  if (!rawS) return;
+  const s = applyOverride(rawS);
+  let span = meta.querySelector('.song-view-count');
+  if (!s.isPublic) { if (span) span.remove(); return; }
+  const vc = getViewCount(_currentSongId);
+  if (vc > 0) {
+    const txt = formatViewCount(vc);
+    if (span) span.textContent = txt;
+    else meta.insertAdjacentHTML('beforeend', `<span class="song-view-count">${txt}</span>`);
+  } else if (span) span.remove();
+}
+
+function viewCountHtml(songId, isPublic) {
+  if (!isPublic) return '';
+  const vc = getViewCount(songId);
+  return vc > 0 ? `<span class="song-view-count">${formatViewCount(vc)}</span>` : '';
+}
+
+// ════════════════════════════════════════════════════════
 //  LOAD ALL SONGS FROM CHAIN
 // ════════════════════════════════════════════════════════
 async function loadAllSongs() {
@@ -969,6 +1092,7 @@ async function loadAllSongs() {
 
     allSongs = parsed.sort((a, b) => b.timestamp - a.timestamp);
 
+    await loadSongViews();
     document.getElementById('feed-loading').style.display = 'none';
     applyFilters();
   } catch (err) {
@@ -1170,7 +1294,7 @@ function songCardHtml(rawS, pl) {
       <div class="song-title">${escHtml(s.title)}${privLabel}</div>
       <div class="song-artist" onclick="event.stopPropagation();showChannel('${s.uploader}')">${escHtml(displayArtist)}</div>
       ${tagsHtml}
-      <div class="song-meta"><span class="song-avatar" style="background:hsl(${parseInt(s.uploader.slice(2,6),16)%360},50%,38%)">${s.uploader.slice(2,4).toUpperCase()}</span><span>${timeAgo}</span>${hiddenBadge}</div>
+      <div class="song-meta"><span class="song-avatar" style="background:hsl(${parseInt(s.uploader.slice(2,6),16)%360},50%,38%)">${s.uploader.slice(2,4).toUpperCase()}</span><span>${timeAgo}</span>${viewCountHtml(s.songId, s.isPublic)}${hiddenBadge}</div>
       <div class="song-actions">${tipCardBtn}${plBtn}${shareBtn}${lcShareBtn}${editBtn}${adminBtn}</div>
     </div>
   </div>`;
@@ -1295,6 +1419,7 @@ async function playSong(songId) {
     `<span style="background:rgba(232,75,138,0.12);border:1px solid rgba(232,75,138,0.3);color:var(--pink);font-size:14px;padding:3px 12px;border-radius:8px;font-weight:700">${getGenreEmoji(s.genre)} ${escHtml(s.genre||'Other')}</span>
      <span>by <a href="${LIGHTSCAN_ADDR}${s.uploader}" target="_blank" style="color:var(--purple);font-weight:600;text-decoration:none">${shortAddr}</a></span>
      <span>${formatTimeAgo(s.timestamp)}</span>
+     ${viewCountHtml(songId, s.isPublic)}
      ${explicitBadge}${privBadge}`;
 
   const descClean = cleanDesc(s.description);
@@ -1430,7 +1555,10 @@ function showAudioPlayer(src) {
   audioEl.loop  = _loopOn;
   document.getElementById('player-audio-wrap').style.display = 'block';
   audioEl.play().catch(() => {});
-  audioEl.onended = (_playlistPlayback && !_loopOn) ? playNextFromPlaylist : null;
+  audioEl.onended = () => {
+    recordSongView(_currentSongId);
+    if (_playlistPlayback && !_loopOn) playNextFromPlaylist();
+  };
 }
 
 function playNextFromPlaylist() {
@@ -1543,7 +1671,7 @@ function showChannel(addr) {
   }
   empty.style.display = 'none';
   grid.style.display  = 'block';
-  count.textContent   = `${songs.length} song${songs.length !== 1 ? 's' : ''}`;
+  count.textContent   = channelCountLabel(addr, songs.length);
 
   if (isOwnChannel) {
     // ── Two clearly labelled sections ──
@@ -2776,7 +2904,7 @@ async function generateTunesDescription() {
 
 <script>
 if (window.matchMedia('(display-mode: standalone)').matches) {
-  const el = document.getElementById('android-install-strip');
+  const el = document.getElementById('android-install-wrap');
   if (el) el.style.display = 'none';
 }
 </script>
