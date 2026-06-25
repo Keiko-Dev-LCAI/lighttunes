@@ -819,7 +819,7 @@ let ltOverrides     = {};
 let isAdmin         = false;
 let _adminKey       = null;
 let _showPlaylist   = false; // true when in playlist view
-let _currentSongId  = null; // song currently open in player (for auto-play next)
+let _currentSongId  = null; // song currently open in player
 let _channelFilter  = null; // wallet address when viewing a channel (keeps search bar clean)
 
 // Personal playlist stored in localStorage per wallet
@@ -1384,9 +1384,7 @@ function showAudioPlayer(src) {
   audioEl.loop  = _loopOn;
   document.getElementById('player-audio-wrap').style.display = 'block';
   audioEl.play().catch(() => {});
-  // Auto-play next song when this one ends (only fires if loop is off)
-  audioEl.onended = playNextSong;
-  // Activate download button now that audio is ready
+  audioEl.onended = null;
 }
 
 let _loopOn = false;
@@ -1403,19 +1401,6 @@ function toggleLoop() {
 }
 
 
-
-function playNextSong() {
-  if (_currentSongId === null) return;
-  const list = filteredSongs.length ? filteredSongs : allSongs;
-  const idx  = list.findIndex(s => s.songId === _currentSongId);
-  if (idx === -1 || idx >= list.length - 1) {
-    // End of list — close the player
-    closePlayer();
-    return;
-  }
-  const next = list[idx + 1];
-  if (next) playSong(next.songId);
-}
 
 function closePlayer() {
   document.getElementById('player-modal').classList.remove('open');
@@ -1562,7 +1547,7 @@ function renderPlaylistView() {
   if (!wallet) { showToast('Connect wallet to view playlist', true); return; }
   const pl    = getPlaylist();
   const songs = allSongs.filter(s => pl.has('v1-' + s.songId));
-  filteredSongs = songs; // keep auto-play in sync with playlist order
+  filteredSongs = songs;
   renderSongGrid(songs, false, { reason: songs.length === 0 ? 'playlist' : null });
   document.getElementById('song-count').textContent = songs.length + ' saved';
 }
