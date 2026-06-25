@@ -95,6 +95,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .subtitle{font-size:20px;max-width:520px;margin:0 auto 36px;color:#ccc;line-height:1.6}
 .connect-wallet-btn{background:linear-gradient(90deg,#7B4CFF,#00E5FF);color:white;font-size:20px;font-weight:700;padding:18px 42px;border:none;border-radius:9999px;cursor:pointer;box-shadow:0 10px 30px rgba(123,76,255,0.4);transition:all .3s ease;margin-bottom:44px;font-family:inherit}
 .connect-wallet-btn:hover{transform:translateY(-4px);box-shadow:0 15px 35px rgba(123,76,255,0.6)}
+.empty-secondary-btn{background:transparent;color:var(--text);font-size:18px;font-weight:600;padding:14px 28px;border:1px solid var(--border);border-radius:9999px;cursor:pointer;margin-top:14px;font-family:inherit}
+.empty-secondary-btn:hover{border-color:var(--pink);color:var(--pink)}
 .features{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font-size:18px;color:#aaa}
 .features div{background:rgba(255,255,255,0.05);padding:12px 26px;border-radius:9999px;border:1px solid rgba(255,255,255,0.08)}
 
@@ -811,7 +813,93 @@ async function loadAllSongs() {
 // ════════════════════════════════════════════════════════
 //  RENDER
 // ════════════════════════════════════════════════════════
-function renderSongGrid(songs, grouped) {
+function renderFeedEmpty(opts = {}) {
+  const el        = document.getElementById('feed-empty');
+  const connected = !!wallet;
+  const reason    = opts.reason || 'catalog';
+
+  if (reason === 'filter') {
+    const genre = opts.genre || 'all';
+    const q     = opts.query || '';
+    let title   = 'No songs found';
+    let sub     = 'Try a different genre or search.';
+    if (genre !== 'all') {
+      title = `No ${genre} songs yet`;
+      sub   = `Nothing in the ${genre} section yet — you could be the first.`;
+    } else if (q.startsWith('#')) {
+      title = `No #${q.slice(1)} songs`;
+      sub   = 'No songs use that tag yet.';
+    } else if (q) {
+      title = 'No matching songs';
+      sub   = `Nothing matched “${q}”.`;
+    }
+    el.innerHTML = `<div class="empty-state">
+      <div class="hero-icon">🎵</div>
+      <h1>${escHtml(title)}</h1>
+      <p class="subtitle">${escHtml(sub)}</p>
+      ${connected
+        ? `<button onclick="openUpload()" class="connect-wallet-btn">⬆️ Upload a Song</button>
+           <button onclick="showFeed()" class="empty-secondary-btn">🌐 Browse All Songs</button>`
+        : `<button onclick="connectWallet()" class="connect-wallet-btn">🔗 Connect Wallet to Upload</button>
+           <button onclick="showFeed()" class="empty-secondary-btn">🌐 Browse All Songs</button>`}
+    </div>`;
+    return;
+  }
+
+  if (reason === 'playlist') {
+    el.innerHTML = `<div class="empty-state">
+      <div class="hero-icon">♥</div>
+      <h1>Playlist empty</h1>
+      <p class="subtitle">Tap ♡ on any song to save it here.</p>
+      <button onclick="showFeed()" class="connect-wallet-btn">🌐 Browse Songs</button>
+    </div>`;
+    return;
+  }
+
+  if (reason === 'channel') {
+    const own = opts.isOwn;
+    el.innerHTML = `<div class="empty-state">
+      <div class="hero-icon">🎤</div>
+      <h1>${own ? 'No songs uploaded yet' : 'No public songs here'}</h1>
+      <p class="subtitle">${own ? 'Upload your first track — public or private.' : 'This artist has not published public songs yet.'}</p>
+      ${own && connected
+        ? `<button onclick="openUpload()" class="connect-wallet-btn">⬆️ Upload a Song</button>`
+        : `<button onclick="showFeed()" class="empty-secondary-btn">🌐 Browse All Songs</button>`}
+    </div>`;
+    return;
+  }
+
+  // Empty catalog (nothing on-chain yet)
+  if (connected) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="hero-icon">🎵</div>
+      <h1>LightTunes</h1>
+      <p class="tagline">The first decentralized music platform on Lightchain AI</p>
+      <p class="subtitle">You're connected — be the first to upload a song to the blockchain.</p>
+      <button onclick="openUpload()" class="connect-wallet-btn">⬆️ Upload Your First Song</button>
+      <div class="features">
+        <div>⚡ Relay handles gas</div>
+        <div>⛓️ Permanent on-chain</div>
+        <div>🔒 Public or private</div>
+      </div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="empty-state">
+      <div class="hero-icon">🎵</div>
+      <h1>LightTunes</h1>
+      <p class="tagline">The first decentralized music platform on Lightchain AI</p>
+      <p class="subtitle">Upload your music. Own it forever. Share it uncensorably.</p>
+      <button onclick="connectWallet()" class="connect-wallet-btn">🔗 Connect Wallet to Upload Music</button>
+      <div class="features">
+        <div>⚡ Gas-free uploads via relay</div>
+        <div>⛓️ Permanent on-chain storage</div>
+        <div>🔒 Public or private songs</div>
+      </div>
+    </div>`;
+  }
+}
+
+function renderSongGrid(songs, grouped, emptyOpts) {
   const grid  = document.getElementById('song-grid');
   const empty = document.getElementById('feed-empty');
   const count = document.getElementById('song-count');
@@ -820,6 +908,12 @@ function renderSongGrid(songs, grouped) {
     grid.style.display  = 'none';
     empty.style.display = 'block';
     count.textContent   = '';
+    const opts = emptyOpts || {};
+    if (!opts.reason) {
+      opts.reason = allSongs.length > 0 ? 'filter' : 'catalog';
+      if (opts.reason === 'filter' && !opts.genre) opts.genre = currentGenre;
+    }
+    renderFeedEmpty(opts);
     return;
   }
   empty.style.display = 'none';
@@ -954,7 +1048,11 @@ function applyFilters() {
     }
     return matchGenre && matchChannel && matchQ;
   });
-  renderSongGrid(filteredSongs, false);
+  renderSongGrid(filteredSongs, false, {
+    reason: filteredSongs.length === 0 && allSongs.length > 0 ? 'filter' : 'catalog',
+    genre:  currentGenre,
+    query:  q,
+  });
 }
 
 function filterByTag(tag) {
@@ -1235,6 +1333,7 @@ function showChannel(addr) {
     grid.style.display  = 'none';
     empty.style.display = 'block';
     count.textContent   = '';
+    renderFeedEmpty({ reason: 'channel', isOwn: isOwnChannel });
     return;
   }
   empty.style.display = 'none';
@@ -1297,7 +1396,7 @@ function renderPlaylistView() {
   const pl    = getPlaylist();
   const songs = allSongs.filter(s => pl.has('v1-' + s.songId));
   filteredSongs = songs; // keep auto-play in sync with playlist order
-  renderSongGrid(songs, false);
+  renderSongGrid(songs, false, { reason: songs.length === 0 ? 'playlist' : null });
   document.getElementById('song-count').textContent = songs.length + ' saved';
 }
 
