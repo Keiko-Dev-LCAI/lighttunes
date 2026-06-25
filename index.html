@@ -36,6 +36,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .nav-search input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:28px;padding:15px 24px 15px 54px;font-size:21px;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s}
 .nav-search input:focus{border-color:var(--pink)}
 .nav-search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--muted);pointer-events:none}
+.nav-android-dl{flex-shrink:0;background:#00d4ff;color:#000;border:2px solid #00d4ff;font-weight:800}
+.nav-android-dl:hover{opacity:.9;color:#000}
+.nav-android-short{display:none}
 .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:10px;border:none;font-size:20px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;white-space:nowrap}
 .btn-pink{background:var(--pink);color:#fff}
@@ -309,17 +312,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   .info-btn-short{display:inline !important}
   .nav-full{display:none}
   .nav-icon{display:inline}
+  .nav-android-full{display:none}
+  .nav-android-short{display:inline}
   .empty-state h1{font-size:34px}
   .hero-icon{font-size:72px}
   .tagline{font-size:19px}
   .subtitle{font-size:17px}
 }
-</style>
-<style>
-  .keiko-android-install { text-align:center; padding:12px 16px 14px; border-top:1px solid rgba(255,255,255,0.08); background:rgba(0,0,0,0.25); }
-  .keiko-android-install a { display:inline-block; background:#00d4ff; color:#000; font-weight:800; font-size:15px; padding:10px 18px; border-radius:10px; text-decoration:none; }
-  .keiko-android-install a:hover { opacity:0.9; }
-  .keiko-android-install p { margin-top:6px; font-size:12px; opacity:0.65; }
 </style>
 </head>
 <body>
@@ -334,6 +333,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <span class="nav-search-icon">🔍</span>
     <input id="search-input" type="text" placeholder="Search songs, artists…" oninput="applyFilters()" autocomplete="off">
   </div>
+  <a href="LightTunes.apk" download class="btn btn-sm nav-android-dl" id="nav-android-dl" title="Download Android app"><span class="nav-android-full">📲 Android</span><span class="nav-android-short">📲</span></a>
   <div class="nav-right">
     <button class="btn btn-outline btn-sm mobile-search-btn" onclick="toggleMobileSearch()" style="display:none">🔍</button>
     <button class="btn btn-outline btn-sm" onclick="openInfo()"><span class="info-btn-full">ℹ️ How It Works</span><span class="info-btn-short" style="display:none">ℹ️</span></button>
@@ -412,7 +412,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <p class="tagline">The first decentralized music platform on Lightchain AI</p>
       <p class="subtitle">Upload your music. Own it forever. Share it uncensorably.</p>
       <button onclick="connectWallet()" class="connect-wallet-btn">🔗 Connect Wallet to Upload Music</button>
-      <p style="margin-top:20px"><a href="LightTunes.apk" download style="color:#00d4ff;font-weight:700;font-size:17px;text-decoration:none">📲 Download Android App</a></p>
       <div class="features">
         <div>⚡ Gas-free uploads via relay</div>
         <div>⛓️ Permanent on-chain storage</div>
@@ -2740,10 +2739,12 @@ async function generateTunesDescription() {
 <!-- X HANDLE -->
 <div style="text-align:center;padding:6px 16px 12px;font-size:13px;opacity:0.65;"><a href="https://x.com/KeikoDevLCAI" target="_blank" rel="noopener" style="color:#9b7fe8;text-decoration:none;font-weight:600;">𝕏 @KeikoDevLCAI</a></div>
 
-<div class="keiko-android-install">
-  <a href="LightTunes.apk" download>📲 Download Android App</a>
-  <p>Download → open file → Install. Allow unknown apps if asked.</p>
-</div>
+<script>
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  const el = document.getElementById('nav-android-dl');
+  if (el) el.style.display = 'none';
+}
+</script>
 
 </body>
 </html>
