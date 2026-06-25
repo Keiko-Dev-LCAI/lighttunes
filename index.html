@@ -55,8 +55,15 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* ── MAIN FEED ── */
 #feed-section{padding:40px 44px}
-#feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+#feed-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
 #feed-title{font-size:34px;font-weight:700}
+#feed-subtitle{display:none;font-size:16px;color:var(--muted);margin-top:6px;line-height:1.55;max-width:720px}
+#feed-subtitle strong{color:var(--gold)}
+#feed-header-actions{display:none;align-items:center;gap:10px;flex-shrink:0}
+.song-tip-btn{color:var(--gold)!important;border-color:rgba(232,184,75,0.55)!important;font-weight:700;padding:6px 12px!important}
+.player-tip-banner{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;margin-bottom:14px;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.35);border-radius:12px;font-size:16px;color:var(--text)}
+.player-tip-banner.open{display:flex}
+.cp-upload-tip-note{display:none;max-width:520px;font-size:15px;color:var(--muted);line-height:1.6;padding:12px 16px;background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.25);border-radius:10px}
 #song-count{font-size:20px;color:var(--muted)}
 #song-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
 
@@ -384,8 +391,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <!-- ── MAIN FEED ── -->
 <div id="feed-section">
   <div id="feed-header">
-    <span id="feed-title">All Songs</span>
-    <span id="song-count"></span>
+    <div>
+      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+        <span id="feed-title">All Songs</span>
+        <span id="song-count"></span>
+      </div>
+      <div id="feed-subtitle"></div>
+    </div>
+    <div id="feed-header-actions"></div>
   </div>
   <div id="feed-loading">🎵⛓️ Loading songs from Lightchain…</div>
   <div id="song-grid" style="display:none"></div>
@@ -432,6 +445,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <div id="player-title"></div>
       <div id="player-artist"></div>
       <div id="player-meta"></div>
+      <div id="player-tip-banner" class="player-tip-banner">
+        <span>💰 Enjoying this track? <strong>90%</strong> of tips go directly to the artist in LCAI.</span>
+        <button class="btn btn-gold btn-sm" id="player-tip-btn">💰 Tip Artist</button>
+      </div>
       <div id="player-description"></div>
       <div id="player-actions"></div>
     </div>
@@ -615,8 +632,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div id="cp-result"></div>
   <div class="cp-warning" id="cp-warning">⚠️ Keep this tab open — your upload is in progress</div>
   <div style="font-size:16px;color:var(--muted);max-width:600px;line-height:1.65" id="cp-hint">Fee paid and file accepted? You can browse LightTunes while chunks upload — watch the bar at the bottom of the screen.</div>
+  <div id="cp-upload-tip-note" class="cp-upload-tip-note">📤 <strong>Share your link</strong> so fans can find your song. Listeners can tip you with 💰 — <strong>90% of every tip</strong> goes to your wallet.</div>
   <div id="cp-success-actions">
     <button class="btn btn-pink" onclick="openUploadedSong()">▶ Play my song</button>
+    <button class="btn btn-gold" onclick="copyUploadedShareLink()">📤 Copy share link</button>
     <button class="btn btn-outline" onclick="viewUploadedInMySongs()">🎤 My Songs</button>
     <button class="btn btn-outline" onclick="dismissUploadOverlay()">Done</button>
   </div>
@@ -762,6 +781,7 @@ const GITHUB_THUMB      = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/ligh
 const GITHUB_MOD_RAW    = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/lighttunes/main/moderation/';
 const CHUNK_SIZE        = 90000; // 90KB relay chunk size
 const TIP_PLATFORM_PCT  = 10;      // % of tip to LightTunes fee wallet
+const FEED_TIP_SUBTITLE = '💰 <strong>Tip artists</strong> with LCAI — 90% goes straight to creators. Tap <strong>💰 Tip</strong> on any song or while listening.';
 
 const ADMIN_WALLETS = [
   '0xa3a653a8cba0710ff57ac34e2278c603b4259fd3',
@@ -1075,7 +1095,7 @@ function songCardHtml(rawS, pl) {
   const editBtn      = isOwner ? `<button class="song-action-btn" onclick="event.stopPropagation();openEditSong(${s.songId})" style="color:var(--blue);border-color:rgba(75,158,232,0.35)">✏️ Edit</button>` : '';
   const isInPlaylist = pl.has(sKey);
   const plBtn        = wallet ? `<button class="song-action-btn${isInPlaylist?' saved':''}" id="plbtn_${s.songId}" onclick="event.stopPropagation();doTogglePlaylist(${s.songId})">${isInPlaylist?'♥':'♡'}</button>` : '';
-  const tipCardBtn   = !isOwner ? `<button class="song-action-btn" onclick="event.stopPropagation();openTipModal(${s.songId})" title="Tip artist" style="color:var(--gold);border-color:rgba(232,184,75,0.4)">💰</button>` : '';
+  const tipCardBtn   = !isOwner ? `<button class="song-action-btn song-tip-btn" onclick="event.stopPropagation();openTipModal(${s.songId})" title="90% goes to artist">💰 Tip</button>` : '';
   const shareBtn     = `<button class="song-action-btn" onclick="event.stopPropagation();copySongLink(${s.songId},this)">📤</button>`;
   const lcShareBtn   = `<button class="song-action-btn" onclick="event.stopPropagation();shareToLightTunes(${s.songId},${JSON.stringify(s.title)},${JSON.stringify(displayArtist)})" title="Share to LightChat" style="color:#9b7fe8;border-color:rgba(155,127,232,0.35)">🔗 Share</button>`;
   const mintBtn      = `<button class="song-action-btn" onclick="event.stopPropagation();openOrcaMint(${s.songId})" title="Mint as NFT">🪙</button>`;
@@ -1150,11 +1170,32 @@ function applyFilters() {
     }
     return matchGenre && matchChannel && matchQ;
   });
+  if (!_channelFilter) setFeedHeaderExtras({ subtitle: FEED_TIP_SUBTITLE });
   renderSongGrid(filteredSongs, false, {
     reason: filteredSongs.length === 0 && allSongs.length > 0 ? 'filter' : 'catalog',
     genre:  currentGenre,
     query:  q,
   });
+}
+
+function setFeedHeaderExtras(opts = {}) {
+  const sub = document.getElementById('feed-subtitle');
+  const act = document.getElementById('feed-header-actions');
+  if (!sub || !act) return;
+  if (opts.subtitle) {
+    sub.innerHTML = opts.subtitle;
+    sub.style.display = 'block';
+  } else {
+    sub.innerHTML = '';
+    sub.style.display = 'none';
+  }
+  if (opts.actions) {
+    act.innerHTML = opts.actions;
+    act.style.display = 'flex';
+  } else {
+    act.innerHTML = '';
+    act.style.display = 'none';
+  }
 }
 
 function filterByTag(tag) {
@@ -1220,10 +1261,18 @@ async function playSong(songId) {
   const shareBtn  = `<button class="btn btn-outline btn-sm" id="player-share-btn" onclick="copySongLink(${s.songId},this)">📤 Share</button><button class="btn btn-outline btn-sm" onclick="shareToLightTunes(${s.songId},${JSON.stringify(s.title)},${JSON.stringify(s.artist||s.uploader)})" style="color:#9b7fe8;border-color:rgba(155,127,232,0.35)">🔗 LightChat</button>`;
   const plBtn     = wallet ? `<button class="btn btn-outline btn-sm" id="player-pl-btn" onclick="doTogglePlaylist(${s.songId});this.textContent=getPlaylist().has('v1-${s.songId}')?'♥ Saved':'♡ Save'">${isInPl ? '♥ Saved' : '♡ Save'}</button>` : '';
   const isOwnSong = wallet && s.uploader.toLowerCase() === wallet.toLowerCase();
-  const tipBtn    = !isOwnSong ? `<button class="btn btn-pink btn-sm" onclick="openTipModal(${s.songId})">💰 Tip Artist</button>` : '';
-  const mintBtn   = `<button class="btn btn-gold btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
+  const tipBtn    = !isOwnSong ? `<button class="btn btn-gold btn-sm" onclick="openTipModal(${s.songId})">💰 Tip Artist</button>` : '';
+  const mintBtn   = `<button class="btn btn-outline btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
   const chainBtn  = s.txHash ? `<a class="btn btn-outline btn-sm" href="${LIGHTSCAN_TX}${s.txHash}" target="_blank">🔗 Chain</a>` : '';
   document.getElementById('player-actions').innerHTML = tipBtn + plBtn + mintBtn + shareBtn + chainBtn;
+  const tipBanner = document.getElementById('player-tip-banner');
+  const tipBannerBtn = document.getElementById('player-tip-btn');
+  if (isOwnSong) {
+    tipBanner.classList.remove('open');
+  } else {
+    tipBanner.classList.add('open');
+    tipBannerBtn.onclick = () => openTipModal(songId);
+  }
 
   // Load audio
   if (chunkCache.has(songId)) {
@@ -1427,7 +1476,19 @@ function showChannel(addr) {
   });
 
   const shortAddr = addr.slice(0,6) + '…' + addr.slice(-4);
-  document.getElementById('feed-title').textContent = isOwnChannel ? '🎤 My Songs' : `🎤 ${shortAddr}`;
+  const channelArtist = songs.length ? (applyOverride(songs[0]).artist || shortAddr) : shortAddr;
+  document.getElementById('feed-title').textContent = isOwnChannel ? '🎤 My Songs' : `🎤 ${channelArtist}`;
+
+  if (isOwnChannel) {
+    setFeedHeaderExtras({
+      subtitle: 'Share your song links — fans can <strong>tip you with 💰</strong> and 90% goes straight to your wallet.',
+    });
+  } else {
+    setFeedHeaderExtras({
+      subtitle: `Support <strong>${escHtml(channelArtist)}</strong> — tips go 90% directly to their wallet in LCAI.`,
+      actions: `<button class="btn btn-gold btn-sm" onclick="openTipModalForUploader('${addr}')">💰 Tip Artist</button>`,
+    });
+  }
 
   const grid  = document.getElementById('song-grid');
   const empty = document.getElementById('feed-empty');
@@ -1484,6 +1545,7 @@ function showHiddenSongs() {
     return hiddenSongs.has(key) && !permanentHidden.has(key);
   });
   document.getElementById('feed-title').textContent = `🚫 Hidden Songs (${hidden.length})`;
+  setFeedHeaderExtras({});
   renderSongGrid(hidden, false);
 }
 
@@ -1492,6 +1554,7 @@ function showPlaylist() {
   _channelFilter = null;
   document.getElementById('search-input').value = '';
   document.getElementById('feed-title').textContent = '♥ My Playlist';
+  setFeedHeaderExtras({ subtitle: FEED_TIP_SUBTITLE });
   renderPlaylistView();
 }
 
@@ -1512,6 +1575,7 @@ function showFeed() {
   document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('.genre-btn').classList.add('active');
   document.getElementById('feed-title').textContent = 'All Songs';
+  setFeedHeaderExtras({ subtitle: FEED_TIP_SUBTITLE });
   applyFilters();
 }
 
@@ -1787,6 +1851,7 @@ function resetUploadOverlayUI() {
   document.getElementById('cp-result').textContent = '';
   document.getElementById('cp-dismiss-btn').style.display = 'none';
   document.getElementById('cp-success-actions').style.display = 'none';
+  document.getElementById('cp-upload-tip-note').style.display = 'none';
   document.getElementById('cp-minimize-btn').style.display = 'none';
   document.getElementById('cp-warning').style.display = '';
   document.getElementById('cp-hint').style.display = '';
@@ -1820,6 +1885,14 @@ function highlightUploadedSong(songId) {
     btn.classList.add('upload-pulse');
     setTimeout(() => btn.classList.remove('upload-pulse'), 6000);
   }
+}
+
+function copyUploadedShareLink() {
+  if (_uploadSongId == null) return;
+  const url = `${location.origin}${location.pathname}?song=${_uploadSongId}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Share link copied — fans can tip you with 💰');
+  }).catch(() => showToast(url, false));
 }
 
 function openUploadedSong() {
@@ -1864,6 +1937,7 @@ function showUploadOverlayResult(kind, message, extraHtml) {
   document.getElementById('cp-minimize-btn').style.display = 'none';
   document.getElementById('cp-dismiss-btn').style.display = isSuccess ? 'none' : 'inline-flex';
   document.getElementById('cp-success-actions').style.display = isSuccess ? 'flex' : 'none';
+  document.getElementById('cp-upload-tip-note').style.display = isSuccess ? 'block' : 'none';
   document.getElementById('chunk-progress-overlay').style.display = 'flex';
 
   const bar = document.getElementById('upload-status-bar');
@@ -2130,6 +2204,23 @@ function selectTipPreset(lcai, btn) {
   document.getElementById('tip-custom').value = String(lcai);
   document.querySelectorAll('.tip-preset-btn').forEach(b => b.classList.remove('selected'));
   if (btn) btn.classList.add('selected');
+}
+
+function openTipModalForUploader(addr) {
+  if (!wallet || !provider) {
+    showToast('Connect wallet to tip artists', true);
+    connectWallet();
+    return;
+  }
+  const songs = allSongs
+    .map(applyOverride)
+    .filter(s => s.uploader.toLowerCase() === addr.toLowerCase() && s.isPublic && !isSongHidden(s))
+    .sort((a, b) => b.timestamp - a.timestamp);
+  if (!songs.length) {
+    showToast('No public songs found for this artist', true);
+    return;
+  }
+  openTipModal(songs[0].songId);
 }
 
 async function openTipModal(songId) {
