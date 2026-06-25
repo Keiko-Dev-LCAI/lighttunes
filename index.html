@@ -504,7 +504,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <!-- Acknowledgement checkbox -->
     <label style="display:flex;align-items:flex-start;gap:14px;margin-top:18px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px">
-      <input type="checkbox" id="upload-ack" onchange="document.getElementById('upload-submit-btn').disabled=!this.checked" style="width:22px;height:22px;flex-shrink:0;margin-top:3px;accent-color:var(--pink)">
+      <input type="checkbox" id="upload-ack" onchange="updateUploadSubmitState()" style="width:22px;height:22px;flex-shrink:0;margin-top:3px;accent-color:var(--pink)">
       <span style="font-size:17px;color:var(--text);line-height:1.6">
         I understand that: <strong>the upload fee is non-refundable</strong>, even if my content is removed · uploads are <strong>permanent on the blockchain</strong> and cannot be undone · I <strong>must mark explicit content</strong> using the Explicit toggle — failure to do so may result in removal without refund · if uploading as Public, I have the right to distribute this content · <strong>upload fees may change at any time</strong> without notice
       </span>
@@ -1332,13 +1332,23 @@ function doTogglePlaylist(songId) {
 // ════════════════════════════════════════════════════════
 //  WALLET
 // ════════════════════════════════════════════════════════
+function detectProvider() {
+  if (window.ethereum && window.ethereum.providers && window.ethereum.providers.length) {
+    const mm = window.ethereum.providers.find(p => p.isMetaMask && !p.isTrust && !p.isBraveWallet);
+    if (mm) return mm;
+    return window.ethereum.providers[0];
+  }
+  return window.ethereum || null;
+}
+
 async function connectWallet() {
   try {
-    if (!window.ethereum) {
+    const eth = detectProvider();
+    if (!eth) {
       if (window.WCEthereumProvider) { await connectViaWalletConnect(); return; }
       showToast('No wallet found. Use WalletConnect or open in your wallet browser.', true); return;
     }
-    provider = new ethers.BrowserProvider(window.ethereum);
+    provider = new ethers.BrowserProvider(eth);
     await provider.send('eth_requestAccounts', []);
     const network = await provider.getNetwork();
     if (network.chainId !== CHAIN_ID) {
@@ -1414,29 +1424,37 @@ function updateWalletUI(connected) {
 // ════════════════════════════════════════════════════════
 //  UPLOAD FORM
 // ════════════════════════════════════════════════════════
+async function fetchLtFee() {
+  const res = await fetch(`${RELAY_SERVER}/api/lighttunes/fee`);
+  if (!res.ok) throw new Error('Fee service unavailable');
+  const data = await res.json();
+  if (!data.fee_lcai || !data.fee_wallet) throw new Error('Fee not configured on server');
+  return data;
+}
+
+function updateUploadSubmitState() {
+  const ack    = document.getElementById('upload-ack')?.checked;
+  const feeOk  = window._ltFeeData && window._ltFeeData.fee_lcai && window._ltFeeData.fee_wallet;
+  const btn    = document.getElementById('upload-submit-btn');
+  if (btn) btn.disabled = !(ack && feeOk);
+}
+
 async function openUpload() {
   if (!wallet) { connectWallet(); return; }
-  // Reset acknowledgement checkbox and submit button
-  const ack = document.getElementById('upload-ack');
-  ack.checked = false;
-  document.getElementById('upload-submit-btn').disabled = true;
+  document.getElementById('upload-ack').checked = false;
+  updateUploadSubmitState();
   document.getElementById('upload-fee-display').textContent = 'Loading…';
   document.getElementById('upload-modal').classList.add('open');
-  // Fetch current fee
   try {
-    const res  = await fetch(`${RELAY_SERVER}/api/lighttunes/fee`);
-    const data = await res.json();
-    if (data.fee_lcai) {
-      document.getElementById('upload-fee-display').textContent =
-        `$${data.fee_usd.toFixed(2)} USD · ~${data.fee_lcai.toFixed(2)} LCAI at current price`;
-    } else {
-      document.getElementById('upload-fee-display').textContent = 'Unable to load fee — try again';
-    }
+    const data = await fetchLtFee();
+    document.getElementById('upload-fee-display').textContent =
+      `$${data.fee_usd.toFixed(2)} USD · ~${data.fee_lcai.toFixed(2)} LCAI at current price`;
     window._ltFeeData = data;
   } catch(e) {
-    document.getElementById('upload-fee-display').textContent = 'Unable to load fee — check connection';
+    document.getElementById('upload-fee-display').textContent = 'Unable to load fee — check connection and retry';
     window._ltFeeData = null;
   }
+  updateUploadSubmitState();
 }
 
 function closeUpload() {
@@ -1520,7 +1538,6 @@ function handleCoverSelect(input) {
 async function doUpload() {
   if (!wallet || !provider) { showToast('Connect wallet first', true); return; }
   if (!selectedFile)         { showToast('Select an audio file first', true); return; }
-  if (!selectedDataURI)      { showToast('File still reading — wait a moment', true); return; }
 
   const title     = document.getElementById('upload-title').value.trim();
   const artist    = document.getElementById('upload-artist').value.trim();
@@ -1545,6 +1562,7 @@ async function doUpload() {
 
   const fileToUpload  = selectedFile;
   const coverToUpload = selectedCoverArt;
+  let feeData         = window._ltFeeData;
 
   closeUpload();
   const overlay = document.getElementById('chunk-progress-overlay');
@@ -1556,9 +1574,9 @@ async function doUpload() {
 
   try {
     // ── Step 1: Send upload fee ──────────────────────────────────────────────
-    const feeData = window._ltFeeData;
     if (!feeData || !feeData.fee_wallet || !feeData.fee_lcai) {
-      throw new Error('Upload fee not loaded — close and reopen the upload form');
+      document.getElementById('cp-status').textContent = 'Loading upload fee…';
+      feeData = await fetchLtFee();
     }
     document.getElementById('cp-status').textContent = `Sending upload fee (~${feeData.fee_lcai.toFixed(2)} LCAI)…`;
 
