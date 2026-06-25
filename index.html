@@ -311,6 +311,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <button class="genre-btn" onclick="selectGenre('Country',this)">🤠 Country</button>
   <button class="genre-btn" onclick="selectGenre('Jazz',this)">🎷 Jazz</button>
   <button class="genre-btn" onclick="selectGenre('Classical',this)">🎻 Classical</button>
+  <button class="genre-btn" onclick="selectGenre('Latin',this)">💃 Latin</button>
   <button class="genre-btn" onclick="selectGenre('Reggae',this)">🌊 Reggae</button>
   <button class="genre-btn" onclick="selectGenre('Gospel',this)">✨ Gospel</button>
   <button class="genre-btn" onclick="selectGenre('Blues',this)">🔵 Blues</button>
@@ -1765,7 +1766,7 @@ function formatTimeAgo(ts) {
 const GENRES = [
   {v:'Hip-Hop',e:'🎤'},{v:'R&B',e:'🎶'},{v:'Pop',e:'⭐'},{v:'Rock',e:'🎸'},
   {v:'Electronic',e:'🎛️'},{v:'Country',e:'🤠'},{v:'Jazz',e:'🎷'},{v:'Classical',e:'🎻'},
-  {v:'Reggae',e:'🌊'},{v:'Gospel',e:'✨'},{v:'Blues',e:'🔵'},{v:'Lo-Fi',e:'☕'},
+  {v:'Latin',e:'💃'},{v:'Reggae',e:'🌊'},{v:'Gospel',e:'✨'},{v:'Blues',e:'🔵'},{v:'Lo-Fi',e:'☕'},
   {v:'Original Soundtrack',e:'🎬'},{v:'Spoken Word',e:'🎙️'},{v:'Poetry',e:'📜'},{v:'Other',e:'🎵'}
 ];
 const GENRE_MAP = Object.fromEntries(GENRES.map(g => [g.v, g.e]));
