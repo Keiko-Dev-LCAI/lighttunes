@@ -689,7 +689,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <li>Use the ♥ button to save any song to your personal playlist — public or private</li>
         <li>Click any artist name to visit their channel and see all their music</li>
         <li>Use the 📤 button to copy a direct link to any song and share it with anyone</li>
-        <li>Use the 🪙 button to mint your song as an NFT on OrcaMint</li>
         <li>Use <strong>💰 Tip Artist</strong> to send LCAI directly to musicians you enjoy</li>
       </ul>
     </div>
@@ -775,7 +774,7 @@ const CHAIN_ID          = 9200n;
 const RPC_URL           = 'https://rpc.mainnet.lightchain.ai';
 const LIGHTSCAN_TX      = 'https://mainnet.lightscan.app/tx/';
 const LIGHTSCAN_ADDR    = 'https://mainnet.lightscan.app/address/';
-const ORCAMINT_URL      = 'https://orcamint.xyz';
+
 const RELAY_SERVER      = 'https://orcavault-production.up.railway.app';
 const GITHUB_THUMB      = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/lighttunes/main/thumbs/';
 const GITHUB_MOD_RAW    = 'https://raw.githubusercontent.com/Keiko-Dev-LCAI/lighttunes/main/moderation/';
@@ -1099,7 +1098,7 @@ function songCardHtml(rawS, pl) {
   const tipCardBtn   = !isOwner ? `<button class="song-action-btn song-tip-btn" onclick="event.stopPropagation();openTipModal(${s.songId})" title="90% goes to artist">💰 Tip</button>` : '';
   const shareBtn     = `<button class="song-action-btn" onclick="event.stopPropagation();copySongLink(${s.songId},this)">📤</button>`;
   const lcShareBtn   = `<button class="song-action-btn" onclick="event.stopPropagation();shareToLightTunes(${s.songId},${JSON.stringify(s.title)},${JSON.stringify(displayArtist)})" title="Share to LightChat" style="color:#9b7fe8;border-color:rgba(155,127,232,0.35)">🔗 Share</button>`;
-  const mintBtn      = `<button class="song-action-btn" onclick="event.stopPropagation();openOrcaMint(${s.songId})" title="Mint as NFT">🪙</button>`;
+
   const isForceExplicit = ltOverrides['v1-' + s.songId]?.forceExplicit;
   const explicitAdminBtn = isAdmin && !isHidden
     ? (isForceExplicit
@@ -1126,7 +1125,7 @@ function songCardHtml(rawS, pl) {
       <div class="song-artist" onclick="event.stopPropagation();showChannel('${s.uploader}')">${escHtml(displayArtist)}</div>
       ${tagsHtml}
       <div class="song-meta"><span class="song-avatar" style="background:hsl(${parseInt(s.uploader.slice(2,6),16)%360},50%,38%)">${s.uploader.slice(2,4).toUpperCase()}</span><span>${timeAgo}</span>${hiddenBadge}</div>
-      <div class="song-actions">${tipCardBtn}${plBtn}${mintBtn}${shareBtn}${lcShareBtn}${editBtn}${adminBtn}</div>
+      <div class="song-actions">${tipCardBtn}${plBtn}${shareBtn}${lcShareBtn}${editBtn}${adminBtn}</div>
     </div>
   </div>`;
 }
@@ -1264,9 +1263,8 @@ async function playSong(songId) {
   const plBtn     = wallet ? `<button class="btn btn-outline btn-sm" id="player-pl-btn" onclick="doTogglePlaylist(${s.songId});this.textContent=getPlaylist().has('v1-${s.songId}')?'♥ Saved':'♡ Save'">${isInPl ? '♥ Saved' : '♡ Save'}</button>` : '';
   const isOwnSong = wallet && s.uploader.toLowerCase() === wallet.toLowerCase();
   const tipBtn    = !isOwnSong ? `<button class="btn btn-gold btn-sm" onclick="openTipModal(${s.songId})">💰 Tip Artist</button>` : '';
-  const mintBtn   = `<button class="btn btn-outline btn-sm" onclick="openOrcaMint(${s.songId})">🪙 Mint NFT</button>`;
   const chainBtn  = s.txHash ? `<a class="btn btn-outline btn-sm" href="${LIGHTSCAN_TX}${s.txHash}" target="_blank">🔗 Chain</a>` : '';
-  document.getElementById('player-actions').innerHTML = tipBtn + plBtn + mintBtn + shareBtn + chainBtn;
+  document.getElementById('player-actions').innerHTML = tipBtn + plBtn + shareBtn + chainBtn;
   const tipBanner = document.getElementById('player-tip-banner');
   const tipBannerBtn = document.getElementById('player-tip-btn');
   if (isOwnSong) {
@@ -2329,7 +2327,7 @@ async function confirmTip() {
 }
 
 // ════════════════════════════════════════════════════════
-//  SHARE & MINT
+//  SHARE
 // ════════════════════════════════════════════════════════
 function copySongLink(songId, btn) {
   const url = `${location.origin}${location.pathname}?song=${songId}`;
@@ -2348,12 +2346,6 @@ function shareToLightTunes(songId, title, artist) {
     desc: artist || ''
   });
   window.location.href = 'https://lightchat.chat/share?' + params.toString();
-}
-
-function openOrcaMint(songId) {
-  const s = allSongs.find(x => x.songId === songId);
-  if (!s) return;
-  window.open(`${ORCAMINT_URL}?title=${encodeURIComponent(s.title)}&description=${encodeURIComponent(s.description||'')}&source=lighttunes`, '_blank');
 }
 
 // ════════════════════════════════════════════════════════
