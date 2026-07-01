@@ -372,6 +372,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .info-callout{background:rgba(124,92,224,0.08);border:1px solid rgba(124,92,224,0.25);border-radius:10px;padding:14px 16px;margin-top:14px;font-size:18px;line-height:1.55}
 .info-help-link{background:none;border:none;padding:0;color:var(--pink);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
 .info-help-link:hover{opacity:0.85}
+  .info-legal-sub{font-size:17px}
+  .info-legal-updated{font-size:14px}
+.info-legal-sub:first-of-type{margin-top:0}
+.info-legal-updated{font-size:15px;color:var(--muted);margin-bottom:18px}
 .info-warning-box{background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3);border-radius:10px;padding:18px 22px;font-size:22px;color:var(--gold);line-height:1.6}
 
 /* ── LOADING OVERLAY ── */
@@ -433,6 +437,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   .info-section p,.info-section li{font-size:16px;line-height:1.6}
   .info-warning-box{font-size:16px;padding:12px 14px}
   .info-section code{font-size:13px}
+  .info-legal-sub{font-size:16px}
+  .info-legal-updated{font-size:13px}
+  .info-toc a{font-size:13px;padding:6px 10px}
   #mobile-wallet-banner{display:block}
   .info-btn-full{display:none}
   .info-btn-short{display:inline !important}
@@ -844,6 +851,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <a href="#" onclick="scrollInfoSection('public');return false">Public / Private</a>
       <a href="#" onclick="scrollInfoSection('tips');return false">Tips</a>
       <a href="#" onclick="scrollInfoSection('playlist');return false">Playlist</a>
+      <a href="#" onclick="scrollInfoSection('legal');return false">Legal</a>
     </nav>
 
     <div class="info-section">
@@ -947,9 +955,57 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       </ul>
     </div>
 
-    <div class="info-section">
-      <div class="info-section-title">⚠️ Copyright</div>
-      <div class="info-warning-box">Only upload music you own or have rights to distribute publicly. Uploading commercial music as Public may violate copyright law. Private uploads for personal listening are your own responsibility.<br><br>If you have a takedown request, contact us via OrcaMail and we will remove the song promptly.</div>
+    <div class="info-section" id="info-legal">
+      <div class="info-section-title">⚖️ Legal &amp; Policies</div>
+      <p class="info-legal-updated">Last updated: July 1, 2026 · By using LightTunes you agree to the terms below.</p>
+
+      <p class="info-legal-sub">Terms of Use</p>
+      <p>LightTunes is a decentralized music interface for content stored on the Lightchain AI blockchain. The service is provided <strong>“as is”</strong> without warranties of any kind. You use LightTunes at your own risk. We do not guarantee uptime, playback quality, permanent availability in this app, or fitness for a particular purpose.</p>
+
+      <p class="info-legal-sub">Upload Agreement</p>
+      <p>When you upload, you confirm that:</p>
+      <ul>
+        <li>The <strong>upload fee is non-refundable</strong>, even if your content is later hidden or removed from this interface.</li>
+        <li>Uploads are <strong>permanent on the blockchain</strong> and cannot be undone or erased from the chain — only removed or hidden from LightTunes.</li>
+        <li>If uploading as <strong>Public</strong>, you own the content or have the legal right to distribute it publicly.</li>
+        <li>You will <strong>honestly mark explicit content</strong> using the Explicit toggle. Failure to do so may result in removal without refund.</li>
+        <li><strong>Upload fees may change at any time</strong> without notice; the fee shown at upload time applies to that upload.</li>
+      </ul>
+
+      <p class="info-legal-sub">Copyright &amp; Takedowns</p>
+      <p>Only upload music you created or have rights to distribute. Uploading copyrighted commercial music as <strong>Public</strong> may violate law and will be <strong>permanently removed</strong> from this app. <strong>Private</strong> uploads for personal listening are your own responsibility.</p>
+      <p style="margin-top:12px">Copyright holders: send takedown requests via <a href="https://orcamail.ai" target="_blank" rel="noopener" style="color:var(--purple);font-weight:600">OrcaMail</a>. We will remove infringing content from the LightTunes interface promptly. Note: on-chain data may remain on the blockchain even after removal from this app.</p>
+
+      <p class="info-legal-sub">Blockchain Permanence</p>
+      <p>All uploads are recorded on the Lightchain blockchain. <strong>Nothing can erase them from the chain.</strong> LightTunes can only hide or remove content from this website and app — not from the public ledger. Do not upload anything you may later regret being permanent.</p>
+
+      <p class="info-legal-sub">Explicit Content &amp; Age</p>
+      <p>Explicit songs are <strong>hidden by default</strong> and only shown when a listener opts in via <strong>🔞 Show Explicit</strong>. You must mark explicit content at upload. Listeners choosing explicit content should be <strong>18 or older</strong> (or the age of majority in their region). LightTunes does not verify age.</p>
+
+      <p class="info-legal-sub">Tips &amp; Payments</p>
+      <p>Tips are voluntary peer-to-peer LCAI transfers via your wallet. <strong>90% goes to the artist</strong>; <strong>10% supports LightTunes</strong> (relay and platform). You are responsible for confirming wallet addresses and transaction amounts. Blockchain transactions are <strong>irreversible</strong>. LightTunes is not a bank, escrow, or money transmitter.</p>
+      <p style="margin-top:12px">Upload fees and tips are separate from listening, which is free.</p>
+
+      <p class="info-legal-sub">Privacy</p>
+      <p>LightTunes is a lightweight web app. We may process:</p>
+      <ul>
+        <li><strong>Wallet addresses</strong> you connect (public on-chain; used for uploads, tips, and channel pages).</li>
+        <li><strong>Browser storage</strong> (playlist, follows, explicit preference) — stays on your device.</li>
+        <li><strong>Play counts</strong> for public tracks (relay-backed, aggregated).</li>
+        <li><strong>Upload metadata</strong> and files sent to the relay for on-chain storage.</li>
+      </ul>
+      <p style="margin-top:12px">We do not sell personal data. Third parties (wallet apps, RPC providers, GitHub for thumbnails, Railway relay) have their own policies. Contact us via OrcaMail for privacy questions.</p>
+
+      <p class="info-legal-sub">Moderation</p>
+      <p>LightTunes may hide, remove, or permanently ban content or wallets that violate these policies, community standards, or applicable law. Moderation affects <strong>this interface only</strong>, not the underlying blockchain record.</p>
+
+      <p class="info-legal-sub">Limitation of Liability</p>
+      <p>To the fullest extent permitted by law, LightTunes and its operators are not liable for any indirect, incidental, or consequential damages arising from use of the service, including lost funds, failed uploads, incorrect tips, copyright disputes, or reliance on on-chain permanence. Your sole remedy for dissatisfaction is to stop using LightTunes.</p>
+
+      <p class="info-legal-sub">Contact</p>
+      <p>Questions, takedowns, or legal notices: <a href="https://orcamail.ai" target="_blank" rel="noopener" style="color:var(--purple);font-weight:600">OrcaMail</a> (wallet contact available via the footer link on this site).</p>
+
+      <div class="info-warning-box" style="margin-top:20px">This summary is for user convenience. Uploading requires checking the acknowledgement box in the upload form, which forms part of your agreement.</div>
     </div>
 
     <div style="text-align:center;margin-top:36px">
@@ -3740,9 +3796,13 @@ async function adminClearExplicit(songId) {
 
 <footer style="background:var(--bg2);border-top:1px solid var(--border);padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);line-height:1.4;margin-top:8px;flex-shrink:0">
   Free to listen · Gas-free uploads via relay · Public uploads must be original content you own. Copyright violations will be permanently removed. All uploads are recorded on the Lightchain blockchain and cannot be erased from the chain — only removed from this interface.
-  <div style="margin-top:10px"><a href="https://orcamail.ai" target="_blank" style="color:#9b7fe8;text-decoration:none;font-size:14px;opacity:0.8">📢 Advertise with us</a></div>
+  <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;font-size:13px">
+    <button type="button" class="info-help-link" onclick="openInfo('legal')" style="font-size:13px">⚖️ Legal &amp; Policies</button>
+    <button type="button" class="info-help-link" onclick="openInfo()" style="font-size:13px">ℹ️ Help &amp; Guide</button>
+    <a href="https://orcamail.ai" target="_blank" rel="noopener" style="color:#9b7fe8;text-decoration:none;opacity:0.85">📢 Advertise with us</a>
+  </div>
 </footer>
-<div style="text-align:center;padding:8px 16px 16px;font-size:13px;opacity:0.65;">New here? <button type="button" class="info-help-link" onclick="openInfo()" style="font-size:13px">Open Help &amp; Guide</button> · Questions? <a href="#" onclick="(function(){navigator.clipboard.writeText('0xA3a653a8cBA0710ff57Ac34E2278C603B4259FD3').catch(function(){});window.open('https://orcamail.ai','_blank');var t=document.getElementById('_dctoast');if(t){t.style.display='block';setTimeout(function(){t.style.display='none'},3000);}})();return false;" style="color:var(--pink);font-weight:600;text-decoration:none;">Contact via OrcaMail 🐬</a></div>
+<div style="text-align:center;padding:8px 16px 16px;font-size:13px;opacity:0.65;">Questions or legal notices? <a href="#" onclick="(function(){navigator.clipboard.writeText('0xA3a653a8cBA0710ff57Ac34E2278C603B4259FD3').catch(function(){});window.open('https://orcamail.ai','_blank');var t=document.getElementById('_dctoast');if(t){t.style.display='block';setTimeout(function(){t.style.display='none'},3000);}})();return false;" style="color:var(--pink);font-weight:600;text-decoration:none;">Contact via OrcaMail 🐬</a></div>
 <div id="_dctoast" style="display:none;position:fixed;bottom:24px;right:24px;background:var(--pink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 16px rgba(0,0,0,.4);">Wallet copied! Opening OrcaMail…</div>
 <script>
 // ── AI Description Generator ───────────────────────────────────────────────
