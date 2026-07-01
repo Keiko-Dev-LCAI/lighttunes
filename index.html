@@ -363,6 +363,15 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .info-section ul{padding-left:28px;margin-top:12px}
 .info-section li{margin-bottom:10px}
 .info-section code{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:19px;color:var(--purple)}
+.info-toc{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.info-toc a{font-size:15px;font-weight:700;color:var(--purple);text-decoration:none;padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-family:inherit}
+.info-toc a:hover{color:var(--pink);border-color:var(--pink)}
+.info-guide-steps{list-style:none;margin:14px 0 0;padding:0}
+.info-guide-steps li{margin-bottom:14px;padding-left:0;line-height:1.55}
+.info-guide-steps strong{color:var(--text)}
+.info-callout{background:rgba(124,92,224,0.08);border:1px solid rgba(124,92,224,0.25);border-radius:10px;padding:14px 16px;margin-top:14px;font-size:18px;line-height:1.55}
+.info-help-link{background:none;border:none;padding:0;color:var(--pink);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+.info-help-link:hover{opacity:0.85}
 .info-warning-box{background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3);border-radius:10px;padding:18px 22px;font-size:22px;color:var(--gold);line-height:1.6}
 
 /* ── LOADING OVERLAY ── */
@@ -452,7 +461,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
   <div class="nav-right">
     <button class="btn btn-outline btn-sm mobile-search-btn" onclick="toggleMobileSearch()" style="display:none">🔍</button>
-    <button class="btn btn-outline btn-sm" onclick="openInfo()"><span class="info-btn-full">ℹ️ How It Works</span><span class="info-btn-short" style="display:none">ℹ️</span></button>
+    <button class="btn btn-outline btn-sm" onclick="openInfo()"><span class="info-btn-full">ℹ️ Help &amp; Guide</span><span class="info-btn-short" style="display:none">ℹ️</span></button>
     <button class="btn btn-outline btn-sm" id="btn-connect" onclick="connectWallet()"><span class="nav-full">🔗 Connect</span><span class="nav-icon">🔗</span></button>
     <button class="btn btn-pink btn-sm" id="btn-upload" onclick="openUpload()" style="display:none"><span class="nav-full">+ Upload</span><span class="nav-icon">⬆️</span></button>
     <button class="btn btn-outline btn-sm" id="btn-channel" onclick="showMyChannel()" style="display:none"><span class="nav-full">🎤 My Songs</span><span class="nav-icon">🎤</span></button>
@@ -715,7 +724,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <label class="form-label">Album / Collection <span class="opt">(optional)</span></label>
         <input class="form-input" id="upload-album" type="text" list="upload-album-list" placeholder="e.g. Summer Vibes EP" maxlength="80" oninput="suggestNextTrackNumber();updateUploadAlbumCoverVisibility()">
         <datalist id="upload-album-list"></datalist>
-        <p class="album-hint">Use the same album name + track number for each song in a release.</p>
+        <p class="album-hint">Use the same album name + track number for each song in a release. <button type="button" class="info-help-link" onclick="openInfo('albums')">Album guide →</button></p>
       </div>
       <div>
         <label class="form-label">Track #</label>
@@ -823,34 +832,97 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div id="info-modal">
   <div id="info-inner">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px">
-      <div style="font-size:36px;font-weight:800;color:var(--pink)">🎵 LightTunes — How It Works</div>
+      <div style="font-size:36px;font-weight:800;color:var(--pink)">🎵 LightTunes — Help &amp; Guide</div>
       <button onclick="closeInfo()" style="background:none;border:none;color:var(--muted);font-size:30px;cursor:pointer;line-height:1">✕</button>
     </div>
+
+    <nav class="info-toc" aria-label="Help topics">
+      <a href="#" onclick="scrollInfoSection('upload');return false">Uploading</a>
+      <a href="#" onclick="scrollInfoSection('albums');return false">Albums</a>
+      <a href="#" onclick="scrollInfoSection('explicit');return false">Explicit</a>
+      <a href="#" onclick="scrollInfoSection('discover');return false">Browse</a>
+      <a href="#" onclick="scrollInfoSection('public');return false">Public / Private</a>
+      <a href="#" onclick="scrollInfoSection('tips');return false">Tips</a>
+      <a href="#" onclick="scrollInfoSection('playlist');return false">Playlist</a>
+    </nav>
 
     <div class="info-section">
       <div class="info-section-title">🔭 Vision</div>
       <p>Music belongs to creators, not corporations. LightTunes gives musicians and artists a permanent home for their work — one that no company can take away. Built on Lightchain AI, powered by the community. No algorithm. No middleman. Forever.</p>
     </div>
 
-    <div class="info-section">
+    <div class="info-section" id="info-upload">
       <div class="info-section-title">🚀 How Uploading Works</div>
-      <p>When you upload a song, it gets split into small chunks and stored permanently on the Lightchain blockchain. This takes 1–3 minutes depending on file size. Once it's on-chain, it cannot be deleted — ever. Make sure you're happy with it before uploading.</p>
-      <p style="margin-top:14px"><strong>Upload fee: $0.50 USD</strong> (paid in LCAI at current market rate). Viewing is always free. The upload fee is <strong>non-refundable</strong> — even if your content is later removed for rule violations. Upload prices may change at any time; the current fee is always shown before you confirm.</p>
-      <p style="margin-top:14px"><strong>Explicit content:</strong> You <em>must</em> use the Explicit toggle when uploading content that contains adult language, themes, or material not suitable for all audiences. Failure to mark explicit content may result in removal without refund.</p>
+      <ol class="info-guide-steps">
+        <li><strong>Connect wallet</strong> — tap Connect in the top bar.</li>
+        <li><strong>Upload</strong> — pick your audio file, song title, genre, and optional cover art.</li>
+        <li><strong>Pay fee &amp; sign</strong> — approve the small LCAI fee (~$0.50 USD) and sign once. The relay stores your song on-chain (usually 1–3 minutes).</li>
+        <li><strong>Keep the tab open</strong> until the progress bar finishes, or use “Browse while uploading.”</li>
+      </ol>
+      <p style="margin-top:14px">Once on-chain, uploads <strong>cannot be deleted</strong> — only hidden from this app. The upload fee is <strong>non-refundable</strong>. The current fee is always shown before you confirm.</p>
     </div>
 
-    <div class="info-section">
+    <div class="info-section" id="info-albums">
+      <div class="info-section-title">💿 Albums &amp; Collections</div>
+      <p>An <strong>album</strong> is a group of songs that share the same <strong>Album / Collection</strong> name. They appear together on the <strong>Albums</strong> tab, on your channel, and in Explore.</p>
+      <p style="margin-top:14px;font-weight:700;color:var(--pink)">Create a new album (when uploading)</p>
+      <ol class="info-guide-steps">
+        <li>Fill in <strong>Album / Collection</strong> (e.g. <em>Summer Vibes EP</em>).</li>
+        <li>Set <strong>Track #</strong> — use 1 for the first song, 2 for the next, and so on.</li>
+        <li>Optional: pick an <strong>Album Cover</strong> image (shown on the Albums browse page).</li>
+        <li>Upload each track separately with the <strong>same album name</strong> and the next track number.</li>
+      </ol>
+      <p style="margin-top:14px;font-weight:700;color:var(--pink)">Move a single into an album (already uploaded)</p>
+      <ol class="info-guide-steps">
+        <li>Go to <strong>My Songs</strong> or your channel — songs without an album show under <strong>🎵 Singles</strong>.</li>
+        <li>Tap <strong>✏️ Edit</strong> on the song.</li>
+        <li>Enter <strong>Album / Collection</strong> and <strong>Track #</strong>.</li>
+        <li>Tap <strong>💾 Save to Blockchain</strong> and confirm in your wallet.</li>
+      </ol>
+      <p style="margin-top:14px;font-weight:700;color:var(--pink)">Change or add an album cover later</p>
+      <ol class="info-guide-steps">
+        <li>Open the <strong>Albums</strong> tab → click your album.</li>
+        <li>Tap <strong>🖼️ Album Cover</strong> (only you see this on your own albums).</li>
+        <li>Pick a square image and sign in your wallet.</li>
+      </ol>
+      <div class="info-callout">💡 <strong>Song cover</strong> = art for one track. <strong>Album cover</strong> = art for the whole release on the Albums page.</div>
+    </div>
+
+    <div class="info-section" id="info-explicit">
+      <div class="info-section-title">🔞 Explicit Content</div>
+      <p>Songs marked explicit are <strong>hidden by default</strong> for all listeners. They only appear when someone checks <strong>🔞 Show Explicit</strong> in the nav bar (their choice, on their device only).</p>
+      <ol class="info-guide-steps">
+        <li>When uploading, check <strong>🔞 Explicit Content</strong> if the song has adult language or themes.</li>
+        <li>When editing, you can change the explicit flag the same way.</li>
+        <li>Listeners who want explicit music must opt in — it is never shown to everyone automatically.</li>
+      </ol>
+      <div class="info-callout">⚠️ You <strong>must</strong> mark explicit content honestly. Unmarked explicit songs may be removed without refund.</div>
+    </div>
+
+    <div class="info-section" id="info-discover">
+      <div class="info-section-title">🧭 Browsing LightTunes</div>
+      <ul>
+        <li><strong>All Songs</strong> — full catalog; filter by genre at the top.</li>
+        <li><strong>Explore</strong> — curated picks, genres, new uploads, and featured albums.</li>
+        <li><strong>Trending</strong> — most-played public tracks.</li>
+        <li><strong>Albums</strong> — browse collections; click an album to see the tracklist and play in order.</li>
+        <li><strong>My Songs</strong> — your uploads (connect wallet). <strong>♥ Playlist</strong> — songs you saved.</li>
+        <li>Click any <strong>artist name</strong> to open their channel. Tap <strong>💰 Tip</strong> to send LCAI (90% to artist).</li>
+      </ul>
+    </div>
+
+    <div class="info-section" id="info-public">
       <div class="info-section-title">🌐 Public vs 🔒 Private</div>
       <p><strong style="color:var(--green)">Public</strong> — your song appears in the main catalog for everyone to discover. Only upload music you created or have the rights to distribute publicly.</p>
       <p style="margin-top:12px"><strong style="color:var(--gold)">Private</strong> — only visible on your own channel. Good for personal listening, covers, or music you're not ready to share yet.</p>
     </div>
 
-    <div class="info-section">
+    <div class="info-section" id="info-tips">
       <div class="info-section-title">💰 Tip Artists</div>
       <p>Love a track? Hit <strong>💰 Tip Artist</strong> while listening. Tips go straight to the creator's wallet in LCAI — <strong>90% to the artist</strong>, <strong>10% to LightTunes</strong> to keep the relay running. Listening stays free; tipping is optional.</p>
     </div>
 
-    <div class="info-section">
+    <div class="info-section" id="info-playlist">
       <div class="info-section-title">♥ Your Personal Playlist</div>
       <p>Tap ♥ on any song — public or private — to add it to your personal playlist. Open <strong>♥ Playlist</strong> in the nav and press play there — your saved songs will continue one after another in order. Browsing All Songs or genres plays one track at a time unless you turn on <strong>🔁 Loop</strong>.</p>
       <p style="margin-top:12px">Your playlist is private — only you can see it, stored in your browser.</p>
@@ -866,15 +938,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
 
     <div class="info-section">
-      <div class="info-section-title">💡 Tips & Tricks</div>
+      <div class="info-section-title">💡 Quick Tips</div>
       <ul>
-        <li>Group songs into albums: add <code>||album:Album Name||</code> and <code>||track:1||</code> to your description</li>
-        <li>Add searchable tags: use <code>#tag</code> in your description (e.g. <code>#chill #90s</code>)</li>
-        <li>Mark explicit content: add <code>||explicit||</code> to your description</li>
-        <li>Use the ♥ button to save any song to your personal playlist — public or private</li>
-        <li>Click any artist name to visit their channel and see all their music</li>
-        <li>Use the 📤 button to copy a direct link to any song and share it with anyone</li>
-        <li>Use <strong>💰 Tip Artist</strong> to send LCAI directly to musicians you enjoy</li>
+        <li>Add searchable <strong>tags</strong> on upload (e.g. <code>chill, 90s, freestyle</code>) — listeners can search <code>#chill</code></li>
+        <li>Use <strong>📤 Share</strong> to copy a direct link to any song</li>
+        <li>Press <strong>▶ Play Album</strong> on an album page to hear tracks in order</li>
+        <li>Need albums or explicit help? Use the <strong>Help &amp; Guide</strong> button (ℹ️) anytime</li>
       </ul>
     </div>
 
@@ -922,6 +991,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <label class="form-label">Album / Collection</label>
         <input class="form-input" id="edit-album" type="text" list="edit-album-list" maxlength="80" placeholder="Leave blank for single">
         <datalist id="edit-album-list"></datalist>
+        <p class="album-hint">Put a single into an album: enter the album name + track number, then Save. <button type="button" class="info-help-link" onclick="openInfo('albums')">How →</button></p>
       </div>
       <div>
         <label class="form-label">Track #</label>
@@ -1124,8 +1194,16 @@ window.addEventListener('load', async () => {
 // ════════════════════════════════════════════════════════
 //  INFO / HOW IT WORKS MODAL
 // ════════════════════════════════════════════════════════
-function openInfo() {
+function scrollInfoSection(section) {
+  const el = document.getElementById('info-' + section);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openInfo(section) {
   document.getElementById('info-modal').classList.add('open');
+  if (section) {
+    setTimeout(() => scrollInfoSection(section), 80);
+  }
 }
 function closeInfo() {
   document.getElementById('info-modal').classList.remove('open');
@@ -1453,8 +1531,9 @@ function renderSongGrid(songs, grouped, emptyOpts) {
       html += `<div class="album-group"><div class="album-group-header" style="cursor:pointer" onclick="showAlbumDetail('${uploader}', ${albJson})" title="Open album">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span> <span style="font-size:14px;color:var(--pink);font-weight:600;margin-left:auto">View album →</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
     });
     // Singles
+    const ownCh = wallet && _channelFilter && wallet.toLowerCase() === _channelFilter.toLowerCase();
     if (noAlbum.length) {
-      html += `<div class="album-group"><div class="album-group-header">🎵 Singles</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${noAlbum.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+      html += `<div class="album-group"><div class="album-group-header">🎵 Singles</div>${singlesHelpHtml(ownCh)}<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${noAlbum.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
     }
     grid.innerHTML = html;
   } else {
@@ -1888,7 +1967,13 @@ function showMyChannel() {
 }
 
 // ── Helper: render album-grouped HTML for a set of songs (returns HTML string) ──
-function renderAlbumGroupHtml(songs) {
+function singlesHelpHtml(ownChannel) {
+  if (!ownChannel) return '';
+  return `<p class="album-hint" style="margin-bottom:14px">These are <strong>singles</strong> — not in an album yet. Tap <strong>✏️ Edit</strong> → set <strong>Album / Collection</strong> + <strong>Track #</strong> → Save. <button type="button" class="info-help-link" onclick="openInfo('albums')">Album guide →</button></p>`;
+}
+
+function renderAlbumGroupHtml(songs, opts) {
+  const ownChannel = opts && opts.ownChannel;
   const pl      = getPlaylist();
   const albums  = {};
   const noAlbum = [];
@@ -1906,7 +1991,7 @@ function renderAlbumGroupHtml(songs) {
     html += `<div class="album-group"><div class="album-group-header" style="cursor:pointer" onclick="showAlbumDetail('${uploader}', ${albJson})" title="Open album">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span> <span style="font-size:14px;color:var(--pink);font-weight:600;margin-left:auto">View album →</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
   });
   if (noAlbum.length) {
-    html += `<div class="album-group"><div class="album-group-header">🎵 Singles</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${noAlbum.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+    html += `<div class="album-group"><div class="album-group-header">🎵 Singles</div>${singlesHelpHtml(ownChannel)}<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${noAlbum.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
   }
   return html;
 }
@@ -1994,7 +2079,7 @@ function showChannel(addr) {
         <div class="channel-section-header" style="background:rgba(82,201,127,0.08);border:1px solid rgba(82,201,127,0.3)">
           🌐 Public Songs <span style="font-size:18px;font-weight:400;color:var(--muted)">${publicSongs.length} song${publicSongs.length!==1?'s':''}</span>
         </div>
-        ${renderAlbumGroupHtml(publicSongs)}
+        ${renderAlbumGroupHtml(publicSongs, { ownChannel: true })}
       </div>`;
     }
     if (privateSongs.length) {
@@ -2002,7 +2087,7 @@ function showChannel(addr) {
         <div class="channel-section-header" style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3)">
           🔒 Private Songs <span style="font-size:18px;font-weight:400;color:var(--muted)">${privateSongs.length} song${privateSongs.length!==1?'s':''}</span>
         </div>
-        ${renderAlbumGroupHtml(privateSongs)}
+        ${renderAlbumGroupHtml(privateSongs, { ownChannel: true })}
       </div>`;
     }
     grid.innerHTML = html;
@@ -2360,11 +2445,11 @@ function renderAlbums() {
   const albums = buildAlbumIndex();
   const gridHtml = albums.length
     ? `<div class="albums-grid">${albums.map(a => albumCardHtml(a)).join('')}</div>`
-    : `<p style="color:var(--muted);padding:40px 0;text-align:center">No albums yet. Upload songs with the same <strong>Album / Collection</strong> name to create one.</p>`;
+    : `<p style="color:var(--muted);padding:40px 0;text-align:center">No albums yet. Upload songs with the same <strong>Album / Collection</strong> name, or edit a single to add it to an album.<br><br><button type="button" class="btn btn-outline btn-sm" onclick="openInfo('albums')">💿 How to create an album</button></p>`;
 
   el.innerHTML = `
     <div class="albums-header">Albums</div>
-    <div class="albums-sub">Collections stored on Lightchain · Upload each track with the same album name + track number</div>
+    <div class="albums-sub">Collections stored on Lightchain · Upload each track with the same album name + track number · <button type="button" class="info-help-link" onclick="openInfo('albums')">Album guide</button></div>
     ${gridHtml}`;
 }
 
@@ -3657,7 +3742,7 @@ async function adminClearExplicit(songId) {
   Free to listen · Gas-free uploads via relay · Public uploads must be original content you own. Copyright violations will be permanently removed. All uploads are recorded on the Lightchain blockchain and cannot be erased from the chain — only removed from this interface.
   <div style="margin-top:10px"><a href="https://orcamail.ai" target="_blank" style="color:#9b7fe8;text-decoration:none;font-size:14px;opacity:0.8">📢 Advertise with us</a></div>
 </footer>
-<div style="text-align:center;padding:8px 16px 16px;font-size:13px;opacity:0.5;">Questions or ideas? <a href="#" onclick="(function(){navigator.clipboard.writeText('0xA3a653a8cBA0710ff57Ac34E2278C603B4259FD3').catch(function(){});window.open('https://orcamail.ai','_blank');var t=document.getElementById('_dctoast');if(t){t.style.display='block';setTimeout(function(){t.style.display='none'},3000);}})();return false;" style="color:var(--pink);font-weight:600;text-decoration:none;">Contact Developer via OrcaMail 🐬</a></div>
+<div style="text-align:center;padding:8px 16px 16px;font-size:13px;opacity:0.65;">New here? <button type="button" class="info-help-link" onclick="openInfo()" style="font-size:13px">Open Help &amp; Guide</button> · Questions? <a href="#" onclick="(function(){navigator.clipboard.writeText('0xA3a653a8cBA0710ff57Ac34E2278C603B4259FD3').catch(function(){});window.open('https://orcamail.ai','_blank');var t=document.getElementById('_dctoast');if(t){t.style.display='block';setTimeout(function(){t.style.display='none'},3000);}})();return false;" style="color:var(--pink);font-weight:600;text-decoration:none;">Contact via OrcaMail 🐬</a></div>
 <div id="_dctoast" style="display:none;position:fixed;bottom:24px;right:24px;background:var(--pink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 2px 16px rgba(0,0,0,.4);">Wallet copied! Opening OrcaMail…</div>
 <script>
 // ── AI Description Generator ───────────────────────────────────────────────
