@@ -268,7 +268,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .follow-btn.following{background:var(--bg3);color:var(--muted);border:2px solid var(--border)}
 
 /* ── EXPLORE ── */
-#explore-section,#trending-section{padding:12px 16px;display:none}
+#explore-section,#trending-section,#albums-section{padding:12px 16px;display:none;flex:1;overflow-y:auto}
 .explore-header{font-size:32px;font-weight:800;margin-bottom:8px}
 .explore-sub{font-size:16px;color:var(--muted);margin-bottom:28px;line-height:1.5}
 .explore-row{margin-bottom:36px}
@@ -306,6 +306,39 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .trending-stats{font-size:14px;color:var(--muted);font-weight:600;white-space:nowrap}
 .trending-play{width:44px;height:44px;border-radius:50%;border:none;background:var(--pink);color:#fff;font-size:18px;cursor:pointer;flex-shrink:0}
 .trending-play:hover{opacity:0.88}
+
+/* ── ALBUM BROWSE ── */
+.albums-header{font-size:32px;font-weight:800;margin-bottom:8px}
+.albums-sub{font-size:16px;color:var(--muted);margin-bottom:24px;line-height:1.5}
+.albums-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,190px));gap:14px;justify-content:start}
+.album-card{cursor:pointer;transition:transform .15s}
+.album-card:hover{transform:translateY(-3px)}
+.album-cover{width:100%;aspect-ratio:1;border-radius:10px;overflow:hidden;position:relative;background:var(--bg4);box-shadow:var(--shadow);margin-bottom:8px}
+.album-cover img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.album-cover-gradient{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px}
+.album-cover-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);opacity:0;transition:opacity .15s;font-size:28px;color:#fff}
+.album-card:hover .album-cover-play{opacity:1}
+.album-card-title{font-size:14px;font-weight:800;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:2px}
+.album-card-artist{font-size:12px;color:var(--purple);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.album-card-stats{font-size:11px;color:var(--muted);margin-top:4px}
+.album-detail-back{display:inline-flex;align-items:center;gap:6px;border:none;background:none;color:var(--pink);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:16px;padding:0}
+.album-detail-back:hover{text-decoration:underline}
+.album-detail-header{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap}
+.album-detail-header > .album-cover{width:140px;height:140px;aspect-ratio:1;flex-shrink:0;border-radius:12px}
+.album-detail-cover{width:140px;height:140px;border-radius:12px;overflow:hidden;flex-shrink:0;position:relative;background:var(--bg4);box-shadow:var(--shadow)}
+.album-detail-cover img{width:100%;height:100%;object-fit:cover}
+.album-detail-info{flex:1;min-width:180px}
+.album-detail-title{font-size:26px;font-weight:800;margin-bottom:4px}
+.album-detail-artist{font-size:16px;color:var(--purple);font-weight:600;cursor:pointer;margin-bottom:6px}
+.album-detail-artist:hover{color:var(--pink)}
+.album-detail-meta{font-size:13px;color:var(--muted);margin-bottom:12px}
+.album-tracklist{display:flex;flex-direction:column;gap:6px}
+.album-track-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;box-shadow:var(--shadow)}
+.album-track-row:hover{border-color:var(--pink);background:var(--bg3)}
+.album-track-num{font-size:14px;font-weight:800;color:var(--muted);min-width:24px;text-align:center}
+.album-track-title{flex:1;font-size:15px;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.album-track-plays{font-size:12px;color:var(--muted);white-space:nowrap}
+.album-hint{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45}
 
 /* ── ALBUM GROUP ── */
 .album-group{margin-bottom:36px}
@@ -358,7 +391,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   #explicit-toggle label{font-size:13px}
   #page-nav{padding:0 10px;flex-wrap:nowrap}
   .page-nav-btn{padding:12px 14px;font-size:15px}
-  #explore-section,#trending-section{padding:18px 14px}
+  #explore-section,#trending-section,#albums-section{padding:18px 14px}
+  .albums-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
   #channel-profile{padding:20px 14px}
   .explore-card{flex:0 0 160px;min-height:120px}
   .explore-header,.trending-title{font-size:24px}
@@ -493,6 +527,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <button class="page-nav-btn active" data-view="feed" onclick="showFeed()">All Songs</button>
   <button class="page-nav-btn" data-view="explore" onclick="showExplore()">Explore</button>
   <button class="page-nav-btn" data-view="trending" onclick="showTrending()">Trending</button>
+  <button class="page-nav-btn" data-view="albums" onclick="showAlbums()">Albums</button>
   <div id="explicit-toggle">
     <label><input type="checkbox" id="explicit-check" onchange="onExplicitToggle()"> 🔞 Show Explicit</label>
   </div>
@@ -532,6 +567,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 <!-- ── TRENDING ── -->
 <div id="trending-section"></div>
+
+<!-- ── ALBUMS ── -->
+<div id="albums-section"></div>
 
 <!-- ── AUDIO PLAYER MODAL ── -->
 <div id="player-modal">
@@ -674,7 +712,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="form-group" style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
       <div>
         <label class="form-label">Album / Collection <span class="opt">(optional)</span></label>
-        <input class="form-input" id="upload-album" type="text" placeholder="e.g. Summer Vibes EP" maxlength="80">
+        <input class="form-input" id="upload-album" type="text" list="upload-album-list" placeholder="e.g. Summer Vibes EP" maxlength="80" oninput="suggestNextTrackNumber()">
+        <datalist id="upload-album-list"></datalist>
+        <p class="album-hint">Use the same album name + track number for each song in a release.</p>
       </div>
       <div>
         <label class="form-label">Track #</label>
@@ -862,6 +902,17 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <label class="form-label">Tags</label>
       <input class="form-input" id="edit-tags" type="text" maxlength="200">
     </div>
+    <div class="form-group" style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+      <div>
+        <label class="form-label">Album / Collection</label>
+        <input class="form-input" id="edit-album" type="text" list="edit-album-list" maxlength="80" placeholder="Leave blank for single">
+        <datalist id="edit-album-list"></datalist>
+      </div>
+      <div>
+        <label class="form-label">Track #</label>
+        <input class="form-input" id="edit-track" type="number" min="1" max="999" style="width:90px" placeholder="—">
+      </div>
+    </div>
     <div class="form-group" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
       <input type="checkbox" id="edit-explicit" style="width:18px;height:18px;cursor:pointer;accent-color:var(--red)">
       <label for="edit-explicit" style="cursor:pointer;font-size:17px;color:var(--text)">🔞 Explicit Content</label>
@@ -951,7 +1002,10 @@ let _showPlaylist      = false; // true when in playlist view
 let _playlistPlayback  = false; // true only when user pressed play from ♥ Playlist
 let _currentSongId     = null; // song currently open in player
 let _channelFilter  = null; // wallet address when viewing a channel (keeps search bar clean)
-let _currentView    = 'feed'; // feed | explore | trending | channel | playlist | hidden
+let _currentView    = 'feed'; // feed | explore | trending | albums | channel | playlist | hidden
+let _albumDetail    = null;   // { uploader, name } when viewing album detail
+let _albumPlayback  = false;
+let _albumQueue     = [];
 let songViews       = {};   // songId (number) -> finished-play count (public songs only)
 
 // Personal playlist stored in localStorage per wallet
@@ -1014,7 +1068,9 @@ function setActiveView(view) {
   document.getElementById('feed-section').style.display = showFeedSec ? 'flex' : 'none';
   document.getElementById('explore-section').style.display = view === 'explore' ? 'block' : 'none';
   document.getElementById('trending-section').style.display = view === 'trending' ? 'block' : 'none';
+  document.getElementById('albums-section').style.display = view === 'albums' ? 'block' : 'none';
   document.getElementById('genre-bar').style.display = view === 'feed' ? 'flex' : 'none';
+  if (view !== 'albums') _albumDetail = null;
   document.querySelectorAll('.page-nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === view || (view === 'channel' && btn.dataset.view === 'feed'));
   });
@@ -1239,6 +1295,7 @@ async function loadAllSongs() {
     document.getElementById('feed-loading').style.display = 'none';
     if (_currentView === 'explore') renderExplore();
     else if (_currentView === 'trending') renderTrending();
+    else if (_currentView === 'albums') renderAlbums();
     else applyFilters();
   } catch (err) {
     console.error('Load error:', err);
@@ -1374,7 +1431,9 @@ function renderSongGrid(songs, grouped, emptyOpts) {
     // Named albums first
     Object.entries(albums).forEach(([alb, albSongs]) => {
       albSongs.sort((a, b) => parseTrackNum(applyOverride(a).description) - parseTrackNum(applyOverride(b).description));
-      html += `<div class="album-group"><div class="album-group-header">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+      const uploader = applyOverride(albSongs[0]).uploader.replace(/'/g, "\\'");
+      const albJson = JSON.stringify(alb);
+      html += `<div class="album-group"><div class="album-group-header" style="cursor:pointer" onclick="showAlbumDetail('${uploader}', ${albJson})" title="Open album">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span> <span style="font-size:14px;color:var(--pink);font-weight:600;margin-left:auto">View album →</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
     });
     // Singles
     if (noAlbum.length) {
@@ -1449,7 +1508,7 @@ function songCardHtml(rawS, pl) {
 //  FILTER & SEARCH
 // ════════════════════════════════════════════════════════
 function selectGenre(genre, btn) {
-  if (_currentView === 'explore' || _currentView === 'trending') showFeed();
+  if (_currentView === 'explore' || _currentView === 'trending' || _currentView === 'albums') showFeed();
   currentGenre = genre;
   document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
   if (btn && btn.classList) btn.classList.add('active');
@@ -1492,13 +1551,14 @@ function onExplicitToggle() {
   saveExplicitPref();
   if (_currentView === 'explore') renderExplore();
   else if (_currentView === 'trending') renderTrending();
+  else if (_currentView === 'albums') renderAlbums();
   else if (_currentView === 'channel' && _channelFilter) showChannel(_channelFilter);
   else if (_showPlaylist) renderPlaylistView();
   else applyFilters();
 }
 
 function applyFilters() {
-  if (_currentView === 'explore' || _currentView === 'trending') {
+  if (_currentView === 'explore' || _currentView === 'trending' || _currentView === 'albums') {
     const q = document.getElementById('search-input').value.trim();
     if (q) { showFeed(); return; }
   }
@@ -1573,10 +1633,14 @@ function filterByTag(tag) {
 // ════════════════════════════════════════════════════════
 //  PLAY SONG
 // ════════════════════════════════════════════════════════
-async function playSong(songId) {
+async function playSong(songId, fromAlbumQueue) {
   const rawS = allSongs.find(x => x.songId === songId);
   if (!rawS) return;
-  _playlistPlayback = _showPlaylist;
+  if (!fromAlbumQueue) {
+    _albumPlayback = false;
+    _albumQueue = [];
+    _playlistPlayback = _showPlaylist;
+  }
   const s = applyOverride(rawS);
   const displayArtist = s.artist || (s.uploader.slice(0,6) + '…' + s.uploader.slice(-4));
 
@@ -1749,8 +1813,16 @@ function showAudioPlayer(src) {
   audioEl.play().catch(() => {});
   audioEl.onended = () => {
     recordSongView(_currentSongId);
-    if (_playlistPlayback && !_loopOn) playNextFromPlaylist();
+    if (_albumPlayback && !_loopOn) playNextFromAlbum();
+    else if (_playlistPlayback && !_loopOn) playNextFromPlaylist();
   };
+}
+
+function playNextFromAlbum() {
+  if (!_albumPlayback || !_albumQueue.length || _currentSongId === null) return;
+  const idx = _albumQueue.indexOf(_currentSongId);
+  if (idx === -1 || idx >= _albumQueue.length - 1) { _albumPlayback = false; return; }
+  playSong(_albumQueue[idx + 1], true);
 }
 
 function playNextFromPlaylist() {
@@ -1778,6 +1850,8 @@ function toggleLoop() {
 
 function closePlayer() {
   _playlistPlayback = false;
+  _albumPlayback = false;
+  _albumQueue = [];
   document.getElementById('player-modal').classList.remove('open');
   const audioEl = document.getElementById('player-audio');
   audioEl.pause();
@@ -1810,7 +1884,9 @@ function renderAlbumGroupHtml(songs) {
   let html = '';
   Object.entries(albums).forEach(([alb, albSongs]) => {
     albSongs.sort((a, b) => parseTrackNum(applyOverride(a).description) - parseTrackNum(applyOverride(b).description));
-    html += `<div class="album-group"><div class="album-group-header">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
+    const uploader = applyOverride(albSongs[0]).uploader.replace(/'/g, "\\'");
+    const albJson = JSON.stringify(alb);
+    html += `<div class="album-group"><div class="album-group-header" style="cursor:pointer" onclick="showAlbumDetail('${uploader}', ${albJson})" title="Open album">💿 ${escHtml(alb)} <span style="font-size:16px;color:var(--muted);font-weight:400">${albSongs.length} song${albSongs.length!==1?'s':''}</span> <span style="font-size:14px;color:var(--pink);font-weight:600;margin-left:auto">View album →</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${albSongs.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
   });
   if (noAlbum.length) {
     html += `<div class="album-group"><div class="album-group-header">🎵 Singles</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px">${noAlbum.map(s=>songCardHtml(s,pl)).join('')}</div></div>`;
@@ -2037,6 +2113,16 @@ function renderExplore() {
     ? rising.map((s, i) => trendingRowHtml(s, i + 1)).join('')
     : '<p style="color:var(--muted);padding:20px 0">No tracks yet — upload the first song!</p>';
 
+  const topAlbums = buildAlbumIndex().slice(0, 8);
+  const albumsRowHtml = topAlbums.length ? `
+    <div class="explore-row">
+      <div class="explore-row-header">
+        <span class="explore-row-title">💿 Albums on Lightchain</span>
+        <button class="explore-row-link" onclick="showAlbums()">See all →</button>
+      </div>
+      <div class="albums-grid">${topAlbums.map(a => albumCardHtml(a)).join('')}</div>
+    </div>` : '';
+
   el.innerHTML = `
     <div class="explore-header">Explore</div>
     <div class="explore-sub">Discover music stored permanently on Lightchain · Tips go 90% to artists</div>
@@ -2051,6 +2137,7 @@ function renderExplore() {
         ${genreCards}
       </div>
     </div>
+    ${albumsRowHtml}
     <div class="explore-row">
       <div class="explore-row-header">
         <span class="explore-row-title">Browse by genre</span>
@@ -2107,6 +2194,229 @@ function showTrending() {
   document.getElementById('search-input').value = '';
   renderTrending();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ════════════════════════════════════════════════════════
+//  ALBUMS
+// ════════════════════════════════════════════════════════
+function getMyAlbumNames() {
+  if (!wallet) return [];
+  const names = new Set();
+  allSongs.forEach(rawS => {
+    const s = applyOverride(rawS);
+    if (s.uploader.toLowerCase() !== wallet.toLowerCase()) return;
+    const alb = parseAlbum(s.description);
+    if (alb) names.add(alb);
+  });
+  return [...names].sort((a, b) => a.localeCompare(b));
+}
+
+function populateAlbumDatalists() {
+  const names = getMyAlbumNames();
+  const html = names.map(n => `<option value="${escHtml(n)}">`).join('');
+  const up = document.getElementById('upload-album-list');
+  const ed = document.getElementById('edit-album-list');
+  if (up) up.innerHTML = html;
+  if (ed) ed.innerHTML = html;
+}
+
+function suggestNextTrackNumber() {
+  const album = document.getElementById('upload-album')?.value.trim();
+  const trackEl = document.getElementById('upload-track');
+  if (!album || !wallet || !trackEl || trackEl.value) return;
+  let max = 0;
+  allSongs.forEach(rawS => {
+    const s = applyOverride(rawS);
+    if (s.uploader.toLowerCase() !== wallet.toLowerCase()) return;
+    if (parseAlbum(s.description) !== album) return;
+    const tn = parseTrackNum(s.description);
+    if (tn > max) max = tn;
+  });
+  trackEl.placeholder = max > 0 ? String(max + 1) : '1';
+}
+
+function buildAlbumIndex() {
+  const showExplicit = document.getElementById('explicit-check').checked;
+  const map = new Map();
+  allSongs.forEach(rawS => {
+    const s = applyOverride(rawS);
+    if (!s.isPublic || isSongHidden(s)) return;
+    const alb = parseAlbum(s.description);
+    if (!alb) return;
+    const key = s.uploader.toLowerCase() + '::' + alb;
+    if (!map.has(key)) {
+      map.set(key, {
+        uploader: s.uploader,
+        name: alb,
+        artist: s.artist || (s.uploader.slice(0, 6) + '…' + s.uploader.slice(-4)),
+        tracks: [],
+        totalPlays: 0,
+        newestTs: s.timestamp || 0,
+        hasExplicit: false,
+      });
+    }
+    const entry = map.get(key);
+    entry.tracks.push(rawS);
+    entry.totalPlays += getViewCount(s.songId);
+    if ((s.timestamp || 0) > entry.newestTs) entry.newestTs = s.timestamp || 0;
+    if (isExplicit(s.description)) entry.hasExplicit = true;
+    if (s.artist) entry.artist = s.artist;
+  });
+  return [...map.values()]
+    .filter(a => showExplicit || !a.hasExplicit)
+    .map(a => {
+      a.tracks.sort((x, y) => {
+        const tx = parseTrackNum(applyOverride(x).description);
+        const ty = parseTrackNum(applyOverride(y).description);
+        if (tx !== ty) return tx - ty;
+        return applyOverride(x).timestamp - applyOverride(y).timestamp;
+      });
+      a.coverSongId = a.tracks.length ? applyOverride(a.tracks[0]).songId : 0;
+      return a;
+    })
+    .sort((a, b) => b.newestTs - a.newestTs);
+}
+
+function getAlbumTracks(uploader, albumName) {
+  const showExplicit = document.getElementById('explicit-check').checked;
+  const isOwn = wallet && uploader.toLowerCase() === wallet.toLowerCase();
+  return allSongs.filter(rawS => {
+    const s = applyOverride(rawS);
+    if (isSongHidden(s)) return false;
+    if (!isOwn && !s.isPublic) return false;
+    if (!showExplicit && isExplicit(s.description)) return false;
+    if (s.uploader.toLowerCase() !== uploader.toLowerCase()) return false;
+    return parseAlbum(s.description) === albumName;
+  }).sort((a, b) => {
+    const ta = parseTrackNum(applyOverride(a).description);
+    const tb = parseTrackNum(applyOverride(b).description);
+    if (ta !== tb) return ta - tb;
+    return applyOverride(a).timestamp - applyOverride(b).timestamp;
+  });
+}
+
+function albumCoverHtml(songId) {
+  const thumbSrc = `${GITHUB_THUMB}v1_${songId}.jpg`;
+  const hue1 = (songId * 137 + 40) % 360;
+  const hue2 = (songId * 137 + 120) % 360;
+  return `<div class="album-cover">
+    <div class="album-cover-gradient" style="background:linear-gradient(135deg,hsl(${hue1},50%,72%),hsl(${hue2},55%,58%))">💿</div>
+    <img src="${thumbSrc}" alt="" onerror="this.style.display='none'">
+    <div class="album-cover-play">▶</div>
+  </div>`;
+}
+
+function albumCardHtml(album) {
+  const plays = album.totalPlays > 0 ? formatViewCount(album.totalPlays, { total: true }) + ' plays' : 'New';
+  const uEsc = album.uploader.replace(/'/g, "\\'");
+  const nJson = JSON.stringify(album.name);
+  return `<div class="album-card" onclick="showAlbumDetail('${uEsc}', ${nJson})">
+    ${albumCoverHtml(album.coverSongId)}
+    <div class="album-card-title">${escHtml(album.name)}</div>
+    <div class="album-card-artist" onclick="event.stopPropagation();showChannel('${uEsc}')">${escHtml(album.artist)}</div>
+    <div class="album-card-stats">${album.tracks.length} track${album.tracks.length !== 1 ? 's' : ''} · ${plays}</div>
+  </div>`;
+}
+
+function renderAlbums() {
+  const el = document.getElementById('albums-section');
+  if (_albumDetail) {
+    renderAlbumDetail(_albumDetail.uploader, _albumDetail.name);
+    return;
+  }
+  const albums = buildAlbumIndex();
+  const gridHtml = albums.length
+    ? `<div class="albums-grid">${albums.map(a => albumCardHtml(a)).join('')}</div>`
+    : `<p style="color:var(--muted);padding:40px 0;text-align:center">No albums yet. Upload songs with the same <strong>Album / Collection</strong> name to create one.</p>`;
+
+  el.innerHTML = `
+    <div class="albums-header">Albums</div>
+    <div class="albums-sub">Collections stored on Lightchain · Upload each track with the same album name + track number</div>
+    ${gridHtml}`;
+}
+
+function renderAlbumDetail(uploader, albumName) {
+  const el = document.getElementById('albums-section');
+  const tracks = getAlbumTracks(uploader, albumName);
+  const uEsc = uploader.replace(/'/g, "\\'");
+  const nJson = JSON.stringify(albumName);
+  if (!tracks.length) {
+    _albumDetail = null;
+    renderAlbums();
+    return;
+  }
+  const first = applyOverride(tracks[0]);
+  const artist = first.artist || (uploader.slice(0, 6) + '…' + uploader.slice(-4));
+  const totalPlays = tracks.reduce((sum, s) => sum + getViewCount(applyOverride(s).songId), 0);
+  const playsLabel = totalPlays > 0 ? formatViewCount(totalPlays, { total: true }) + ' plays' : 'No plays yet';
+  const trackRows = tracks.map((rawS, i) => {
+    const s = applyOverride(rawS);
+    const tn = parseTrackNum(s.description) || (i + 1);
+    const vc = getViewCount(s.songId);
+    const eBadge = isExplicit(s.description) ? ' <span class="explicit-label" style="font-size:11px;padding:2px 6px">E</span>' : '';
+    return `<div class="album-track-row" onclick="playAlbumTrack('${uEsc}', ${nJson}, ${s.songId})">
+      <span class="album-track-num">${tn}</span>
+      <span class="album-track-title">${escHtml(s.title)}${eBadge}</span>
+      <span class="album-track-plays">${vc > 0 ? formatViewCount(vc) : '—'}</span>
+      <button class="trending-play" style="width:32px;height:32px;font-size:12px" onclick="event.stopPropagation();playSong(${s.songId})">▶</button>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <button class="album-detail-back" onclick="showAlbumsList()">← All Albums</button>
+    <div class="album-detail-header">
+      ${albumCoverHtml(first.songId)}
+      <div class="album-detail-info">
+        <div class="album-detail-title">${escHtml(albumName)}</div>
+        <div class="album-detail-artist" onclick="showChannel('${uEsc}')">${escHtml(artist)}</div>
+        <div class="album-detail-meta">${tracks.length} track${tracks.length !== 1 ? 's' : ''} · ${playsLabel}</div>
+        <button class="btn btn-pink btn-sm" onclick="playAlbum('${uEsc}', ${nJson})">▶ Play Album</button>
+      </div>
+    </div>
+    <div class="album-tracklist">${trackRows}</div>`;
+}
+
+function showAlbums() {
+  setActiveView('albums');
+  _showPlaylist = false;
+  _channelFilter = null;
+  _albumDetail = null;
+  document.getElementById('search-input').value = '';
+  renderAlbums();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showAlbumsList() {
+  _albumDetail = null;
+  renderAlbums();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showAlbumDetail(uploader, albumName) {
+  setActiveView('albums');
+  _albumDetail = { uploader, name: albumName };
+  renderAlbumDetail(uploader, albumName);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function playAlbum(uploader, albumName) {
+  const tracks = getAlbumTracks(uploader, albumName);
+  if (!tracks.length) return;
+  _albumPlayback = true;
+  _playlistPlayback = false;
+  _albumQueue = tracks.map(s => applyOverride(s).songId);
+  playSong(_albumQueue[0], true);
+}
+
+function playAlbumTrack(uploader, albumName, songId) {
+  const tracks = getAlbumTracks(uploader, albumName);
+  if (!tracks.length) return;
+  _albumPlayback = true;
+  _playlistPlayback = false;
+  _albumQueue = tracks.map(s => applyOverride(s).songId);
+  const idx = _albumQueue.indexOf(songId);
+  if (idx > 0) _albumQueue = _albumQueue.slice(idx);
+  playSong(songId, true);
 }
 
 // ════════════════════════════════════════════════════════
@@ -2243,6 +2553,8 @@ async function openUpload() {
   updateUploadSubmitState();
   document.getElementById('upload-fee-display').textContent = 'Loading…';
   document.getElementById('upload-modal').classList.add('open');
+  populateAlbumDatalists();
+  suggestNextTrackNumber();
   try {
     const data = await fetchLtFee();
     document.getElementById('upload-fee-display').textContent =
@@ -2913,6 +3225,10 @@ function openEditSong(songId) {
   document.getElementById('edit-tags').value     = parseTags(s.description).join(', ');
   document.getElementById('edit-explicit').checked = isExplicit(s.description);
   document.getElementById('edit-public').checked   = s.isPublic;
+  document.getElementById('edit-album').value = parseAlbum(s.description) || '';
+  const tn = parseTrackNum(s.description);
+  document.getElementById('edit-track').value = tn > 0 ? tn : '';
+  populateAlbumDatalists();
   buildGenrePicker('edit-genre-picker', 'edit-genre', s.genre || 'Other');
   document.getElementById('edit-save-btn').textContent = '💾 Save to Blockchain';
   document.getElementById('edit-save-btn').disabled    = false;
@@ -2937,12 +3253,11 @@ async function saveEditSong() {
   if (!genre) { showToast('Pick a genre', true); return; }
 
   const tagsNorm = rawTags ? rawTags.split(',').map(t => t.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')).filter(Boolean).join(',') : '';
-  const s = allSongs.find(x => x.songId === _editSongId);
-  const origAlbum = parseAlbum(s ? s.description : '');
-  const origTrack = parseTrackNum(s ? s.description : '');
+  const rawAlbum = document.getElementById('edit-album').value.trim();
+  const rawTrack = document.getElementById('edit-track').value.trim();
   let desc = rawDesc;
-  if (origAlbum) desc += (desc?' ':'') + '||album:' + origAlbum + '||';
-  if (origTrack) desc += (desc?' ':'') + '||track:' + origTrack + '||';
+  if (rawAlbum) desc += (desc?' ':'') + '||album:' + rawAlbum + '||';
+  if (rawTrack) desc += (desc?' ':'') + '||track:' + rawTrack + '||';
   if (explicit)  desc += (desc?' ':'') + '||explicit||';
   if (tagsNorm)  desc += (desc?' ':'') + '||tags:' + tagsNorm + '||';
 
