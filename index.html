@@ -570,6 +570,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 <!-- ── ALBUMS ── -->
 <div id="albums-section"></div>
+<input type="file" id="album-cover-file-input" accept="image/*" style="display:none" onchange="handleAlbumCoverFileForAlbum(this)">
 
 <!-- ── AUDIO PLAYER MODAL ── -->
 <div id="player-modal">
@@ -712,13 +713,27 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="form-group" style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
       <div>
         <label class="form-label">Album / Collection <span class="opt">(optional)</span></label>
-        <input class="form-input" id="upload-album" type="text" list="upload-album-list" placeholder="e.g. Summer Vibes EP" maxlength="80" oninput="suggestNextTrackNumber()">
+        <input class="form-input" id="upload-album" type="text" list="upload-album-list" placeholder="e.g. Summer Vibes EP" maxlength="80" oninput="suggestNextTrackNumber();updateUploadAlbumCoverVisibility()">
         <datalist id="upload-album-list"></datalist>
         <p class="album-hint">Use the same album name + track number for each song in a release.</p>
       </div>
       <div>
         <label class="form-label">Track #</label>
         <input class="form-input" id="upload-track" type="number" placeholder="1" min="1" max="999" style="width:90px">
+      </div>
+    </div>
+
+    <!-- Album cover (shown when album name is set) -->
+    <div class="form-group" id="upload-album-cover-group" style="display:none">
+      <label class="form-label">Album Cover <span class="opt">(optional — square image for the whole release)</span></label>
+      <div class="drop-zone" id="album-cover-drop-zone" style="padding:20px" onclick="document.getElementById('album-cover-input').click()">
+        <div class="drop-zone-icon" style="font-size:32px">💿</div>
+        <div class="drop-zone-text" style="font-size:17px">Click to pick album cover</div>
+        <div class="drop-zone-sub" style="font-size:14px;margin-top:6px">Shown on Albums browse · same cover for all tracks in this album</div>
+      </div>
+      <input type="file" id="album-cover-input" accept="image/*" style="display:none" onchange="handleAlbumCoverSelect(this)">
+      <div class="cover-preview-wrap">
+        <img id="album-cover-preview-img" alt="Album cover preview" style="display:none">
       </div>
     </div>
 
@@ -991,7 +1006,9 @@ let filteredSongs   = [];
 let currentGenre    = 'all';
 let selectedFile    = null;
 let selectedDataURI = null;
-let selectedCoverArt = null;  // base64 image for cover art
+let selectedCoverArt = null;  // base64 image for song cover art
+let selectedAlbumCover = null; // base64 image for album collection cover
+let _pendingAlbumCover = null;
 let chunkCache      = new Map(); // songId → blob URL
 let hiddenSongs     = new Set();
 let permanentHidden = new Set();
@@ -2295,13 +2312,29 @@ function getAlbumTracks(uploader, albumName) {
   });
 }
 
-function albumCoverHtml(songId) {
-  const thumbSrc = `${GITHUB_THUMB}v1_${songId}.jpg`;
-  const hue1 = (songId * 137 + 40) % 360;
-  const hue2 = (songId * 137 + 120) % 360;
+function albumSlug(albumName) {
+  const s = (albumName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return (s.slice(0, 40) || 'album');
+}
+
+function albumThumbFilename(uploader, albumName) {
+  const w = uploader.toLowerCase().replace(/^0x/, '');
+  return `album_${w}_${albumSlug(albumName)}.jpg`;
+}
+
+function albumThumbUrl(uploader, albumName) {
+  return `${GITHUB_THUMB}${albumThumbFilename(uploader, albumName)}`;
+}
+
+function albumCoverHtml(uploader, albumName, fallbackSongId) {
+  const albumSrc = uploader && albumName ? albumThumbUrl(uploader, albumName) : '';
+  const trackSrc = fallbackSongId ? `${GITHUB_THUMB}v1_${fallbackSongId}.jpg` : '';
+  const hue1 = ((fallbackSongId || 1) * 137 + 40) % 360;
+  const hue2 = ((fallbackSongId || 1) * 137 + 120) % 360;
+  const fallbackJs = trackSrc ? `if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback='';}else{this.style.display='none';}` : `this.style.display='none'`;
   return `<div class="album-cover">
     <div class="album-cover-gradient" style="background:linear-gradient(135deg,hsl(${hue1},50%,72%),hsl(${hue2},55%,58%))">💿</div>
-    <img src="${thumbSrc}" alt="" onerror="this.style.display='none'">
+    <img src="${albumSrc || trackSrc}" ${trackSrc && albumSrc ? `data-fallback="${trackSrc}"` : ''} alt="" onerror="${fallbackJs}">
     <div class="album-cover-play">▶</div>
   </div>`;
 }
@@ -2311,7 +2344,7 @@ function albumCardHtml(album) {
   const uEsc = album.uploader.replace(/'/g, "\\'");
   const nJson = JSON.stringify(album.name);
   return `<div class="album-card" onclick="showAlbumDetail('${uEsc}', ${nJson})">
-    ${albumCoverHtml(album.coverSongId)}
+    ${albumCoverHtml(album.uploader, album.name, album.coverSongId)}
     <div class="album-card-title">${escHtml(album.name)}</div>
     <div class="album-card-artist" onclick="event.stopPropagation();showChannel('${uEsc}')">${escHtml(album.artist)}</div>
     <div class="album-card-stats">${album.tracks.length} track${album.tracks.length !== 1 ? 's' : ''} · ${plays}</div>
@@ -2349,6 +2382,10 @@ function renderAlbumDetail(uploader, albumName) {
   const artist = first.artist || (uploader.slice(0, 6) + '…' + uploader.slice(-4));
   const totalPlays = tracks.reduce((sum, s) => sum + getViewCount(applyOverride(s).songId), 0);
   const playsLabel = totalPlays > 0 ? formatViewCount(totalPlays, { total: true }) + ' plays' : 'No plays yet';
+  const isOwnAlbum = wallet && uploader.toLowerCase() === wallet.toLowerCase();
+  const coverBtn = isOwnAlbum
+    ? `<button class="btn btn-outline btn-sm" onclick="pickAlbumCover('${uEsc}', ${nJson})">🖼️ Album Cover</button>`
+    : '';
   const trackRows = tracks.map((rawS, i) => {
     const s = applyOverride(rawS);
     const tn = parseTrackNum(s.description) || (i + 1);
@@ -2365,12 +2402,15 @@ function renderAlbumDetail(uploader, albumName) {
   el.innerHTML = `
     <button class="album-detail-back" onclick="showAlbumsList()">← All Albums</button>
     <div class="album-detail-header">
-      ${albumCoverHtml(first.songId)}
+      ${albumCoverHtml(uploader, albumName, first.songId)}
       <div class="album-detail-info">
         <div class="album-detail-title">${escHtml(albumName)}</div>
         <div class="album-detail-artist" onclick="showChannel('${uEsc}')">${escHtml(artist)}</div>
         <div class="album-detail-meta">${tracks.length} track${tracks.length !== 1 ? 's' : ''} · ${playsLabel}</div>
-        <button class="btn btn-pink btn-sm" onclick="playAlbum('${uEsc}', ${nJson})">▶ Play Album</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-pink btn-sm" onclick="playAlbum('${uEsc}', ${nJson})">▶ Play Album</button>
+          ${coverBtn}
+        </div>
       </div>
     </div>
     <div class="album-tracklist">${trackRows}</div>`;
@@ -2555,6 +2595,7 @@ async function openUpload() {
   document.getElementById('upload-modal').classList.add('open');
   populateAlbumDatalists();
   suggestNextTrackNumber();
+  updateUploadAlbumCoverVisibility();
   try {
     const data = await fetchLtFee();
     document.getElementById('upload-fee-display').textContent =
@@ -2569,10 +2610,13 @@ async function openUpload() {
 
 function closeUpload() {
   document.getElementById('upload-modal').classList.remove('open');
-  selectedFile = null; selectedDataURI = null; selectedCoverArt = null;
+  selectedFile = null; selectedDataURI = null; selectedCoverArt = null; selectedAlbumCover = null;
   document.getElementById('file-preview-info').style.display = 'none';
   document.getElementById('chunk-hint-box').innerHTML = '';
   document.getElementById('cover-preview-img').style.display = 'none';
+  const acPreview = document.getElementById('album-cover-preview-img');
+  if (acPreview) { acPreview.src = ''; acPreview.style.display = 'none'; }
+  updateUploadAlbumCoverVisibility();
   document.getElementById('upload-title').value = '';
   document.getElementById('upload-artist').value = '';
   document.getElementById('upload-desc').value = '';
@@ -2621,28 +2665,106 @@ function processFile(file) {
   reader.readAsDataURL(file);
 }
 
-function handleCoverSelect(input) {
-  const file = input.files[0];
-  if (!file) return;
+function resizeImageFileToJpeg(file, cb) {
   const reader = new FileReader();
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      // Resize to square 400×400
       const canvas = document.createElement('canvas');
       const side   = Math.min(img.width, img.height);
       canvas.width = 400; canvas.height = 400;
       const ox = (img.width  - side) / 2;
       const oy = (img.height - side) / 2;
       canvas.getContext('2d').drawImage(img, ox, oy, side, side, 0, 0, 400, 400);
-      selectedCoverArt = canvas.toDataURL('image/jpeg', 0.82);
-      const preview = document.getElementById('cover-preview-img');
-      preview.src   = selectedCoverArt;
-      preview.style.display = 'block';
+      cb(canvas.toDataURL('image/jpeg', 0.82));
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+function handleCoverSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  resizeImageFileToJpeg(file, dataUrl => {
+    selectedCoverArt = dataUrl;
+    const preview = document.getElementById('cover-preview-img');
+    preview.src   = selectedCoverArt;
+    preview.style.display = 'block';
+  });
+}
+
+function handleAlbumCoverSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  resizeImageFileToJpeg(file, dataUrl => {
+    selectedAlbumCover = dataUrl;
+    const preview = document.getElementById('album-cover-preview-img');
+    preview.src = selectedAlbumCover;
+    preview.style.display = 'block';
+  });
+}
+
+function updateUploadAlbumCoverVisibility() {
+  const album = document.getElementById('upload-album')?.value.trim();
+  const grp = document.getElementById('upload-album-cover-group');
+  if (!grp) return;
+  grp.style.display = album ? 'block' : 'none';
+  if (!album) {
+    selectedAlbumCover = null;
+    const preview = document.getElementById('album-cover-preview-img');
+    if (preview) { preview.src = ''; preview.style.display = 'none'; }
+  }
+}
+
+function pickAlbumCover(uploader, albumName) {
+  if (!wallet) { showToast('Connect wallet first', true); return; }
+  _pendingAlbumCover = { uploader, name: albumName };
+  document.getElementById('album-cover-file-input').click();
+}
+
+async function saveAlbumCoverToRelay(albumName, coverDataUri) {
+  if (!wallet || !signer) { showToast('Connect wallet first', true); return false; }
+  const timestamp = Date.now();
+  const message = `LightTunes album cover: ${albumName}\nWallet: ${wallet.toLowerCase()}\nTimestamp: ${timestamp}`;
+  try {
+    const signature = await signer.signMessage(message);
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/set-album-cover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        wallet: wallet.toLowerCase(),
+        album: albumName,
+        thumbnail: coverDataUri,
+        signature,
+        timestamp,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Relay error');
+    return true;
+  } catch (e) {
+    showToast('Album cover failed: ' + (e.message || e), true);
+    return false;
+  }
+}
+
+function handleAlbumCoverFileForAlbum(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file || !_pendingAlbumCover) return;
+  const pending = _pendingAlbumCover;
+  resizeImageFileToJpeg(file, async dataUrl => {
+    const ok = await saveAlbumCoverToRelay(pending.name, dataUrl);
+    if (ok) {
+      showToast('Album cover updated!');
+      if (_currentView === 'albums' && _albumDetail) {
+        renderAlbumDetail(pending.uploader, pending.name);
+      } else if (_currentView === 'explore') renderExplore();
+      else if (_currentView === 'albums') renderAlbums();
+    }
+    _pendingAlbumCover = null;
+  });
 }
 
 let _uploadPollTimer   = null;
@@ -2937,9 +3059,10 @@ async function doUpload() {
   if (explicit) desc += (desc ? ' ' : '') + '||explicit||';
   if (tagsNorm) desc += (desc ? ' ' : '') + '||tags:' + tagsNorm + '||';
 
-  const fileToUpload  = selectedFile;
-  const coverToUpload = selectedCoverArt;
-  let feeData         = window._ltFeeData;
+  const fileToUpload      = selectedFile;
+  const coverToUpload     = selectedCoverArt;
+  const albumCoverToUpload = selectedAlbumCover;
+  let feeData             = window._ltFeeData;
 
   closeUpload();
   _uploadTitle  = title;
@@ -2991,6 +3114,10 @@ async function doUpload() {
     formData.append('isPublic',       isPublic ? 'true' : 'false');
     formData.append('paymentTxHash',  paymentTxHash);
     if (coverToUpload) formData.append('thumbnail', coverToUpload);
+    if (albumCoverToUpload && rawAlbum) {
+      formData.append('albumCover', albumCoverToUpload);
+      formData.append('albumName', rawAlbum);
+    }
 
     const startRes = await fetch(`${RELAY_SERVER}/api/lighttunes/upload`, {
       method: 'POST', body: formData,
