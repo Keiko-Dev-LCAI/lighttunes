@@ -70,9 +70,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .genre-btn{padding:8px 14px;border:none;background:transparent;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0}
 .genre-btn:hover{color:var(--text)}
 .genre-btn.active{color:var(--pink);border-bottom-color:var(--pink)}
-#explicit-toggle{display:flex;align-items:center;gap:6px;padding:0 10px;width:auto;border-top:none;margin-top:0;flex-shrink:0;margin-left:4px}
-#explicit-toggle label{font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px}
-#explicit-toggle input[type=checkbox]{width:14px;height:14px;accent-color:var(--red);cursor:pointer}
+#explicit-toggle{display:flex;align-items:center;gap:8px;padding:6px 12px;flex-shrink:0;margin-left:auto;background:rgba(214,61,61,0.08);border:1px solid rgba(214,61,61,0.28);border-radius:8px}
+#explicit-toggle label{font-size:14px;font-weight:600;color:var(--text);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+#explicit-toggle input[type=checkbox]{width:16px;height:16px;accent-color:var(--red);cursor:pointer;flex-shrink:0}
 
 /* ── MAIN FEED ── */
 #feed-section{padding:8px 16px;flex:1;display:flex;flex-direction:column}
@@ -354,9 +354,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   .btn-sm{font-size:20px;padding:7px 10px;border-radius:8px;min-width:38px;text-align:center}
   #genre-bar{padding:0 6px}
   .genre-btn{padding:12px 12px;font-size:14px}
-  #explicit-toggle{padding:0 8px}
+  #explicit-toggle{padding:5px 10px;margin-left:auto}
   #explicit-toggle label{font-size:13px}
-  #page-nav{padding:0 10px}
+  #page-nav{padding:0 10px;flex-wrap:nowrap}
   .page-nav-btn{padding:12px 14px;font-size:15px}
   #explore-section,#trending-section{padding:18px 14px}
   #channel-profile{padding:20px 14px}
@@ -486,9 +486,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <button class="genre-btn" onclick="selectGenre('Spoken Word',this)">🎙️ Spoken</button>
   <button class="genre-btn" onclick="selectGenre('Poetry',this)">📜 Poetry</button>
   <button class="genre-btn" onclick="selectGenre('Other',this)">🎵 Other</button>
-  <div id="explicit-toggle">
-    <label><input type="checkbox" id="explicit-check" onchange="onExplicitToggle()"> 🔞 Show Explicit</label>
-  </div>
 </div>
 
 <!-- ── PAGE NAV ── -->
@@ -496,6 +493,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <button class="page-nav-btn active" data-view="feed" onclick="showFeed()">All Songs</button>
   <button class="page-nav-btn" data-view="explore" onclick="showExplore()">Explore</button>
   <button class="page-nav-btn" data-view="trending" onclick="showTrending()">Trending</button>
+  <div id="explicit-toggle">
+    <label><input type="checkbox" id="explicit-check" onchange="onExplicitToggle()"> 🔞 Show Explicit</label>
+  </div>
 </div>
 
 <!-- ── MAIN FEED ── -->
@@ -1035,6 +1035,7 @@ function isSongHidden(s) {
 //  INIT
 // ════════════════════════════════════════════════════════
 window.addEventListener('load', async () => {
+  restoreExplicitPref();
   readProvider = new ethers.JsonRpcProvider(RPC_URL);
   buildGenrePicker('upload-genre-picker', 'upload-genre');
   await loadHiddenSongs();
@@ -1475,9 +1476,24 @@ function exploreFromGenre(genre) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function restoreExplicitPref() {
+  const el = document.getElementById('explicit-check');
+  if (!el) return;
+  if (localStorage.getItem('lt_show_explicit') === '1') el.checked = true;
+}
+
+function saveExplicitPref() {
+  const el = document.getElementById('explicit-check');
+  if (!el) return;
+  localStorage.setItem('lt_show_explicit', el.checked ? '1' : '0');
+}
+
 function onExplicitToggle() {
+  saveExplicitPref();
   if (_currentView === 'explore') renderExplore();
   else if (_currentView === 'trending') renderTrending();
+  else if (_currentView === 'channel' && _channelFilter) showChannel(_channelFilter);
+  else if (_showPlaylist) renderPlaylistView();
   else applyFilters();
 }
 
