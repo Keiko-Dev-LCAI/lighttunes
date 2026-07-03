@@ -137,7 +137,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 #player-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:500;overflow-y:auto;padding:20px}
 #player-modal.open{display:flex;align-items:flex-start;justify-content:center}
 #player-inner{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:700px;margin:auto;overflow-x:hidden}
-#player-art-wrap{width:100%;aspect-ratio:1/1;position:relative;background:#000;overflow:hidden}
+#player-art-wrap{width:100%;max-width:min(440px,46vh);aspect-ratio:1/1;margin:0 auto;position:relative;background:#000;overflow:hidden;border-radius:12px}
 #player-art-wrap img{width:100%;height:100%;object-fit:cover;display:block}
 #player-art-gradient{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:absolute;inset:0}
 .player-art-note{font-size:120px;opacity:0.35;filter:drop-shadow(0 4px 16px rgba(0,0,0,.8));user-select:none}
