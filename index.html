@@ -587,6 +587,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <!-- ── ALBUMS ── -->
 <div id="albums-section"></div>
 <input type="file" id="album-cover-file-input" accept="image/*" style="display:none" onchange="handleAlbumCoverFileForAlbum(this)">
+<input type="file" id="song-thumb-file-input" accept="image/*" style="display:none" onchange="handleSongThumbFile(this)">
 
 <!-- ── AUDIO PLAYER MODAL ── -->
 <div id="player-modal">
@@ -1135,6 +1136,7 @@ let selectedDataURI = null;
 let selectedCoverArt = null;  // base64 image for song cover art
 let selectedAlbumCover = null; // base64 image for album collection cover
 let _pendingAlbumCover = null;
+let _pendingSongThumb  = null;
 let chunkCache      = new Map(); // songId → blob URL
 let hiddenSongs     = new Set();
 let permanentHidden = new Set();
@@ -1609,7 +1611,7 @@ function songCardHtml(rawS, pl) {
   const hue1 = (s.songId * 137 + 40) % 360;
   const hue2 = (s.songId * 137 + 120) % 360;
   const thumbSrc = `${GITHUB_THUMB}v1_${s.songId}.jpg`;
-  const artHtml  = `<div class="song-art-gradient" style="background:linear-gradient(135deg,hsl(${hue1},50%,72%),hsl(${hue2},55%,58%))"><div class="song-art-play">▶</div></div><img src="${thumbSrc}" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">`;
+  const artHtml  = `<div class="song-art-gradient" style="background:linear-gradient(135deg,hsl(${hue1},50%,72%),hsl(${hue2},55%,58%))"><div class="song-art-play">▶</div></div><img src="${thumbSrc}" data-song-thumb="${s.songId}" alt="" onerror="this.style.display='none'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">`;
   const explicitTag = isExplicit(s.description) ? '<div class="song-explicit-badge">E</div>' : '';
 
   const isHidden     = hiddenSongs.has(sKey);
@@ -1619,6 +1621,7 @@ function songCardHtml(rawS, pl) {
 
   const isOwner      = wallet && s.uploader.toLowerCase() === wallet.toLowerCase();
   const editBtn      = isOwner ? `<button class="song-action-btn" onclick="event.stopPropagation();openEditSong(${s.songId})" style="color:var(--blue);border-color:rgba(75,158,232,0.35)">✏️ Edit</button>` : '';
+  const thumbBtn     = isOwner ? `<button class="song-action-btn" onclick="event.stopPropagation();pickSongThumb(${s.songId})" title="Set or change cover art" style="color:var(--green);border-color:rgba(82,201,127,0.35)">🖼️ Cover</button>` : '';
   const isInPlaylist = pl.has(sKey);
   const plBtn        = wallet ? `<button class="song-action-btn${isInPlaylist?' saved':''}" id="plbtn_${s.songId}" onclick="event.stopPropagation();doTogglePlaylist(${s.songId})">${isInPlaylist?'♥':'♡'}</button>` : '';
   const tipCardBtn   = !isOwner ? `<button class="song-action-btn song-tip-btn" onclick="event.stopPropagation();openTipModal(${s.songId})" title="90% goes to artist">💰 Tip</button>` : '';
@@ -1651,7 +1654,7 @@ function songCardHtml(rawS, pl) {
       <div class="song-artist" onclick="event.stopPropagation();showChannel('${s.uploader}')">${escHtml(displayArtist)}</div>
       ${tagsHtml}
       <div class="song-meta"><span class="song-avatar" style="background:hsl(${parseInt(s.uploader.slice(2,6),16)%360},50%,38%)">${s.uploader.slice(2,4).toUpperCase()}</span><span>${timeAgo}</span>${viewCountHtml(s.songId, s.isPublic)}${hiddenBadge}</div>
-      <div class="song-actions">${tipCardBtn}${plBtn}${shareBtn}${lcShareBtn}${editBtn}${adminBtn}</div>
+      <div class="song-actions">${tipCardBtn}${plBtn}${shareBtn}${lcShareBtn}${thumbBtn}${editBtn}${adminBtn}</div>
     </div>
   </div>`;
 }
@@ -2906,6 +2909,59 @@ function handleAlbumCoverFileForAlbum(input) {
     }
     _pendingAlbumCover = null;
   });
+}
+
+// ─── Per-song cover / thumbnail (owner only) ───────────────────────────────
+function pickSongThumb(songId) {
+  if (!wallet || !signer) { showToast('Connect wallet first', true); return; }
+  _pendingSongThumb = songId;
+  document.getElementById('song-thumb-file-input').click();
+}
+
+function handleSongThumbFile(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file || _pendingSongThumb == null) return;
+  const songId = _pendingSongThumb;
+  _pendingSongThumb = null;
+  resizeImageFileToJpeg(file, async dataUrl => {
+    const ok = await saveSongThumbToRelay(songId, dataUrl);
+    if (ok) {
+      showToast('Cover saved! ✅ May take a minute to appear.');
+      // Optimistic local refresh with cache-bust
+      document.querySelectorAll(`img[data-song-thumb="${songId}"]`).forEach(img => {
+        img.src = `${GITHUB_THUMB}v1_${songId}.jpg?t=${Date.now()}`;
+        img.style.display = '';
+      });
+    }
+  });
+}
+
+async function saveSongThumbToRelay(songId, coverDataUri) {
+  if (!wallet || !signer) { showToast('Connect wallet first', true); return false; }
+  const timestamp = Date.now();
+  const message = `LightTunes song thumbnail: ${songId}\nWallet: ${wallet.toLowerCase()}\nTimestamp: ${timestamp}`;
+  try {
+    showToast('Sign once to verify you own this song…');
+    const signature = await signer.signMessage(message);
+    const res = await fetch(`${RELAY_SERVER}/api/lighttunes/set-song-thumbnail`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        wallet: wallet.toLowerCase(),
+        songId: String(songId),
+        thumbnail: coverDataUri,
+        signature,
+        timestamp,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Relay error');
+    return true;
+  } catch (e) {
+    showToast('Cover failed: ' + (e.message || e), true);
+    return false;
+  }
 }
 
 let _uploadPollTimer   = null;
