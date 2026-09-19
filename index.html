@@ -790,15 +790,15 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <!-- Upload fee display -->
     <div id="upload-fee-box" style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.3);border-radius:10px;padding:14px 18px;margin-top:16px;font-size:18px;color:var(--gold);line-height:1.5">
-      💳 <strong>Upload fee:</strong> <span id="upload-fee-display">Loading…</span><br>
-      <span style="font-size:15px;color:var(--muted)">Fees may change at any time. Current fee is shown above before you confirm.</span>
+      🎁 <strong>Free to upload during the KEIKO promo</strong> (through Sept 30).<br>
+      <span id="upload-fee-display" style="font-size:15px;color:var(--muted)">Loading…</span>
     </div>
 
     <!-- Acknowledgement checkbox -->
     <label style="display:flex;align-items:flex-start;gap:14px;margin-top:18px;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px">
       <input type="checkbox" id="upload-ack" onchange="updateUploadSubmitState()" style="width:22px;height:22px;flex-shrink:0;margin-top:3px;accent-color:var(--pink)">
       <span style="font-size:17px;color:var(--text);line-height:1.6">
-        I understand that: <strong>the upload fee is non-refundable</strong>, even if my content is removed · uploads are <strong>permanent on the blockchain</strong> and cannot be undone · I <strong>must mark explicit content</strong> using the Explicit toggle — failure to do so may result in removal without refund · if uploading as Public, I have the right to distribute this content · <strong>upload fees may change at any time</strong> without notice
+        I understand that: uploads are <strong>permanent on the blockchain</strong> and cannot be undone · I <strong>must mark explicit content</strong> using the Explicit toggle — failure to do so may result in removal · if uploading as Public, I have the right to distribute this content · promo free upload ends after Sept 30
       </span>
     </label>
 
@@ -806,7 +806,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <button class="btn btn-outline" onclick="closeUpload()" style="flex:1">Cancel</button>
       <button class="btn btn-pink" onclick="doUpload()" style="flex:2" id="upload-submit-btn" disabled>🚀 Upload to Blockchain</button>
     </div>
-    <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5">You'll be asked to sign once to authorize upload, then send the fee — relay handles the rest.</p>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5">You'll be asked to sign once to authorize upload — no upload fee during the KEIKO promo.</p>
   </div>
 </div>
 
@@ -815,7 +815,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div style="font-size:52px" id="cp-hero-icon">🎵⛓️</div>
   <div style="font-size:22px;font-weight:800;color:var(--pink);max-width:600px;word-break:break-word" id="cp-filename"></div>
   <div class="cp-steps" id="cp-steps">
-    <div class="cp-step" data-step="1"><span class="cp-step-num">Step 1</span>Pay fee</div>
+    <div class="cp-step" data-step="1"><span class="cp-step-num">Step 1</span>Sign</div>
     <div class="cp-step" data-step="2"><span class="cp-step-num">Step 2</span>Sign</div>
     <div class="cp-step" data-step="3"><span class="cp-step-num">Step 3</span>Send file</div>
     <div class="cp-step" data-step="4"><span class="cp-step-num">Step 4</span>On chain</div>
@@ -866,10 +866,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <ol class="info-guide-steps">
         <li><strong>Connect wallet</strong> — tap Connect in the top bar.</li>
         <li><strong>Upload</strong> — pick your audio file, song title, genre, and optional cover art.</li>
-        <li><strong>Pay fee &amp; sign</strong> — approve the small LCAI fee (~$0.50 USD) and sign once. The relay stores your song on-chain (usually 1–3 minutes).</li>
+        <li><strong>Sign</strong> — sign once (no upload fee during the KEIKO promo). The relay stores your song on-chain (usually 1–3 minutes).</li>
         <li><strong>Keep the tab open</strong> until the progress bar finishes, or use “Browse while uploading.”</li>
       </ol>
-      <p style="margin-top:14px">Once on-chain, uploads <strong>cannot be deleted</strong> — only hidden from this app. The upload fee is <strong>non-refundable</strong>. The current fee is always shown before you confirm.</p>
+      <p style="margin-top:14px">Once on-chain, uploads <strong>cannot be deleted</strong> — only hidden from this app. During the KEIKO promo there is no upload fee (gas in LCAI still applies).</p>
     </div>
 
     <div class="info-section" id="info-albums">
@@ -2721,13 +2721,15 @@ async function fetchLtFee() {
   const res = await fetch(`${RELAY_SERVER}/api/lighttunes/fee`);
   if (!res.ok) throw new Error('Fee service unavailable');
   const data = await res.json();
-  if (!data.fee_lcai || !data.fee_wallet) throw new Error('Fee not configured on server');
+  if (typeof data.fee_lcai !== 'number') throw new Error('Fee not configured on server');
+  if (data.fee_lcai > 0 && !data.fee_wallet) throw new Error('Fee not configured on server');
   return data;
 }
 
 function updateUploadSubmitState() {
   const ack    = document.getElementById('upload-ack')?.checked;
-  const feeOk  = window._ltFeeData && window._ltFeeData.fee_lcai && window._ltFeeData.fee_wallet;
+  const feeOk  = window._ltFeeData && typeof window._ltFeeData.fee_lcai === 'number'
+    && (window._ltFeeData.fee_lcai === 0 || window._ltFeeData.fee_wallet);
   const btn    = document.getElementById('upload-submit-btn');
   if (btn) btn.disabled = !(ack && feeOk);
 }
@@ -2744,7 +2746,9 @@ async function openUpload() {
   try {
     const data = await fetchLtFee();
     document.getElementById('upload-fee-display').textContent =
-      `$${data.fee_usd.toFixed(2)} USD · ~${data.fee_lcai.toFixed(2)} LCAI at current price`;
+      (data.fee_lcai === 0)
+        ? 'No LCAI upload fee right now — you only sign once.'
+        : `$${data.fee_usd.toFixed(2)} USD · ~${data.fee_lcai.toFixed(2)} LCAI at current price`;
     window._ltFeeData = data;
   } catch(e) {
     document.getElementById('upload-fee-display').textContent = 'Unable to load fee — check connection and retry';
@@ -3270,27 +3274,30 @@ async function doUpload() {
   overlay.style.display = 'flex';
   document.getElementById('cp-filename').textContent = title;
   setUploadStep(1);
-  updateUploadProgressUI(0, 'Approve the upload fee in your wallet…');
+  updateUploadProgressUI(0, 'Preparing upload…');
 
   let paymentTxHash = null;
 
   try {
-    // ── Step 1: Send upload fee ──────────────────────────────────────────────
-    if (!feeData || !feeData.fee_wallet || !feeData.fee_lcai) {
+    // ── Step 1: Send upload fee (skipped when promo fee is 0) ───────────────
+    if (!feeData || typeof feeData.fee_lcai !== 'number') {
       updateUploadProgressUI(0, 'Loading upload fee…');
       feeData = await fetchLtFee();
     }
-    updateUploadProgressUI(2, `Approve ~${feeData.fee_lcai.toFixed(2)} LCAI fee in your wallet…`);
-
     const signerObj = await provider.getSigner();
-    const feeWei    = ethers.parseEther(String(Math.ceil(feeData.fee_lcai * 1.01 * 1000) / 1000)); // 1% buffer
-    const feeTx     = await signerObj.sendTransaction({
-      to:    feeData.fee_wallet,
-      value: feeWei,
-    });
-    updateUploadProgressUI(5, 'Waiting for fee confirmation on chain…');
-    await feeTx.wait(1);
-    paymentTxHash = feeTx.hash;
+    if (feeData.fee_lcai > 0) {
+      updateUploadProgressUI(2, `Approve ~${feeData.fee_lcai.toFixed(2)} LCAI fee in your wallet…`);
+      const feeWei    = ethers.parseEther(String(Math.ceil(feeData.fee_lcai * 1.01 * 1000) / 1000)); // 1% buffer
+      const feeTx     = await signerObj.sendTransaction({
+        to:    feeData.fee_wallet,
+        value: feeWei,
+      });
+      updateUploadProgressUI(5, 'Waiting for fee confirmation on chain…');
+      await feeTx.wait(1);
+      paymentTxHash = feeTx.hash;
+    } else {
+      updateUploadProgressUI(2, 'No upload fee during the KEIKO promo…');
+    }
     setUploadStep(2);
 
     // ── Step 2: Sign to prove wallet ownership ───────────────────────────────
@@ -3310,7 +3317,7 @@ async function doUpload() {
     formData.append('genre',     genre);
     formData.append('description', desc);
     formData.append('isPublic',       isPublic ? 'true' : 'false');
-    formData.append('paymentTxHash',  paymentTxHash);
+    formData.append('paymentTxHash',  paymentTxHash || '');
     if (coverToUpload) formData.append('thumbnail', coverToUpload);
     if (albumCoverToUpload && rawAlbum) {
       formData.append('albumCover', albumCoverToUpload);
