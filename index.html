@@ -3288,7 +3288,8 @@ async function doUpload() {
 
     // ── Step 2: Sign to prove wallet ownership ───────────────────────────────
     updateUploadProgressUI(8, 'Sign the message in your wallet to authorize upload…');
-    const message   = `LightTunes upload: ${wallet.toLowerCase()}`;
+    const timestamp = Date.now().toString();
+    const message   = `LightTunes upload: ${wallet.toLowerCase()}\nTimestamp: ${timestamp}`;
     const signature = await signerObj.signMessage(message);
     setUploadStep(3);
 
@@ -3298,6 +3299,7 @@ async function doUpload() {
     formData.append('audio',     fileToUpload);
     formData.append('wallet',    wallet.toLowerCase());
     formData.append('signature', signature);
+    formData.append('timestamp', timestamp);
     formData.append('title',     title);
     formData.append('artist',    artist);
     formData.append('genre',     genre);
@@ -3870,16 +3872,41 @@ async function generateTunesDescription() {
   }
 
   btn.disabled = true;
-  statusEl.textContent = '⏳ Generating…';
+  statusEl.textContent = '⏳ Confirm the upload fee, then sign…';
 
   try {
+    if (!window.ethereum || typeof ethers === 'undefined') {
+      statusEl.textContent = '❌ Connect a wallet first.';
+      btn.disabled = false;
+      return;
+    }
+    const descProvider = new ethers.BrowserProvider(window.ethereum);
+    const descSigner = await descProvider.getSigner();
+    const descWallet = (await descSigner.getAddress()).toLowerCase();
+    let paymentTxHash = '';
+    let fee = (typeof feeData !== 'undefined' && feeData) ? feeData : null;
+    if (!fee || typeof fee.fee_lcai !== 'number') fee = await fetchLtFee();
+    if (fee && fee.fee_lcai > 0) {
+      const feeWei = ethers.parseEther(String(Math.ceil(fee.fee_lcai * 1.01 * 1000) / 1000));
+      const feeTx = await descSigner.sendTransaction({ to: fee.fee_wallet, value: feeWei });
+      await feeTx.wait(1);
+      paymentTxHash = feeTx.hash;
+    }
+    const timestamp = Date.now().toString();
+    const message = `OrcaVault describe\nWallet: ${descWallet}\nTitle: ${title}\nTimestamp: ${timestamp}`;
+    const signature = await descSigner.signMessage(message);
+    statusEl.textContent = '⏳ Generating…';
     const resp = await fetch(RELAY_SERVER + '/api/describe-upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
         category: genreEl ? genreEl.value : '',
-        type: 'audio'
+        type: 'audio',
+        wallet: descWallet,
+        signature,
+        timestamp,
+        paymentTxHash
       })
     });
     const data = await resp.json();
